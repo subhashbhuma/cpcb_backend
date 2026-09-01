@@ -1,0 +1,106 @@
+<IfModule mod_rewrite.c>
+
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # ======================================================
+    # BLOCK .git ACCESS
+    # ======================================================
+    RewriteRule ^\.git - [F,L]
+
+    # ======================================================
+    # HANDLE AUTHORIZATION HEADER
+    # ======================================================
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # ======================================================
+    # REMOVE TRAILING SLASH
+    # ======================================================
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # ======================================================
+    # SEND REQUESTS TO LARAVEL
+    # ======================================================
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+
+</IfModule>
+
+# ==========================================================
+# HIDE SERVER INFORMATION
+# ==========================================================
+ServerSignature Off
+
+<IfModule mod_headers.c>
+
+    # ======================================================
+    # REMOVE TECHNOLOGY DISCLOSURE
+    # ======================================================
+    Header always unset X-Powered-By
+    Header always unset Server
+
+    # ======================================================
+    # HSTS
+    # ======================================================
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # ======================================================
+    # CLICKJACKING
+    # ======================================================
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # ======================================================
+    # MIME SNIFFING
+    # ======================================================
+    Header always set X-Content-Type-Options "nosniff"
+
+    # ======================================================
+    # XSS FILTER
+    # ======================================================
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # ======================================================
+    # REFERRER POLICY
+    # ======================================================
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # ======================================================
+    # PERMISSIONS POLICY
+    # ======================================================
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+
+    # ======================================================
+    # CACHE CONTROL
+    # ======================================================
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Header always set Pragma "no-cache"
+    Header always set Expires "0"
+
+    # ======================================================
+    # CROSS ORIGIN SECURITY
+    # ======================================================
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+
+</IfModule>
+
+# ==========================================================
+# BLOCK SENSITIVE FILES
+# ==========================================================
+<FilesMatch "^(artisan|server\.php|\.env|\.env\.example|\.gitignore|\.gitattributes|composer\.(json|lock)|package\.(json|lock)|yarn\.lock|pnpm-lock\.yaml|vite\.config\.js|webpack\.mix\.js|phpunit\.xml|phpunit\.xml\.dist|Dockerfile|docker-compose\.yml|README\.md|README\.txt|readme\.md|readme\.txt)$">
+    Require all denied
+</FilesMatch>
+
+# ==========================================================
+# BLOCK PHP EXECUTION IN UPLOADS
+# ==========================================================
+<FilesMatch "\.(php|phtml|php3|php4|php5|phar)$">
+    Require all denied
+</FilesMatch>

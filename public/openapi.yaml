@@ -1,0 +1,492 @@
+openapi: 3.0.3
+info:
+  title: CPCB AI Backend API
+  description: "Comprehensive API documentation for the CPCB (Central Pollution Control Board) AI-powered backend."
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: "Local development server"
+tags:
+  - name: "Visitor & Layout"
+    description: "Endpoints for visitor tracking and layout initialization."
+  - name: "CMS: Content"
+    description: "Jobs, Tenders, Announcements, Circulars, Job Results."
+  - name: "CMS: Reports"
+    description: "Annual, Technical, Fortnightly, Studies, NGT Reports, AQI."
+  - name: "CMS: Media"
+    description: "Photo/Video Galleries and Events."
+  - name: "CMS: Master Data"
+    description: "Site settings, Slider, Social Media, FAQs, Portals."
+  - name: "CMS: Navigation"
+    description: "Menus, Pages, Breadcrumbs, Sitemap."
+  - name: "CMS: Directory & Contacts"
+    description: "Contact directory, details, and subjects."
+  - name: "CMS: Directions"
+    description: "Directions, Letters Issued, Comment Reports."
+  - name: Interactions
+    description: "Feedback and Complaint submissions."
+  - name: Search
+    description: "Global search and suggestions."
+  - name: Authenticated
+    description: "Protected endpoints for dashboard and data uploads."
+
+paths:
+  # === Visitor & Layout ===
+  /layout-init:
+    get:
+      tags: ["Visitor & Layout"]
+      summary: "Initialize Layout Data"
+      responses:
+        "200":
+          description: "Successful"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LayoutInitResponse"
+  /slug-init:
+    get:
+      tags: ["Visitor & Layout"]
+      summary: "Initialize Slug-based Data"
+      responses:
+        "200":
+          description: "Successful"
+  /visitor/add:
+    post:
+      tags: ["Visitor & Layout"]
+      summary: "Add Visitor"
+      responses:
+        "200":
+          description: "Success"
+  /visitor/stats:
+    get:
+      tags: ["Visitor & Layout"]
+      summary: "Get Visitor Stats"
+      responses:
+        "200":
+          description: "Stats data"
+
+  # === CMS: Content ===
+  /jobs/fetch-all:
+    get:
+      tags: ["CMS: Content"]
+      summary: "Fetch All Jobs"
+      responses:
+        "200":
+          description: "Success"
+  /jobs/fetch-all-datatable/{type}:
+    post:
+      tags: ["CMS: Content"]
+      summary: "Fetch Jobs DataTable"
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "DataTable response"
+
+  /announcements/fetch-all:
+    get:
+      tags: ["CMS: Content"]
+      summary: "Fetch All Announcements"
+      responses:
+        "200":
+          description: "Success"
+  /announcements/fetch-all-datatable/{type}:
+    post:
+      tags: ["CMS: Content"]
+      summary: "Fetch Announcements DataTable"
+      parameters:
+        - name: type
+          in: path
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Success"
+
+  /tender/fetch-all:
+    get:
+      tags: ["CMS: Content"]
+      summary: "Fetch All Tenders"
+      responses:
+        "200":
+          description: "Success"
+  /tender/fetch-all-datatable/{type}:
+    post:
+      tags: ["CMS: Content"]
+      summary: "Fetch Tenders DataTable"
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Success"
+
+  /circulars/fetch-all:
+    get:
+      tags: ["CMS: Content"]
+      summary: "Fetch All Circulars"
+      responses:
+        "200":
+          description: "Success"
+  /circulars/fetch-all-datatable/{type}:
+    post:
+      tags: ["CMS: Content"]
+      summary: "Fetch Circulars DataTable"
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Success"
+
+  # === CMS: Reports ===
+  /annualReports/fetch-all:
+    get:
+      tags: ["CMS: Reports"]
+      summary: "Fetch Annual Reports"
+      responses:
+        "200":
+          description: "Success"
+  /annual-report/fetch-all-datatable:
+    post:
+      tags: ["CMS: Reports"]
+      summary: "Annual Reports DataTable"
+      responses:
+        "200":
+          description: "Success"
+
+  /technicalReport/fetch-all:
+    get:
+      tags: ["CMS: Reports"]
+      summary: "Fetch Technical Reports"
+      responses:
+        "200":
+          description: "Success"
+  /technical-report/fetch-all-datatable/{type}:
+    post:
+      tags: ["CMS: Reports"]
+      summary: "Technical Reports DataTable"
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Success"
+
+  /ngt-court-cases/fetch:
+    get:
+      tags: ["CMS: Reports"]
+      summary: "Fetch NGT Court Cases"
+      responses:
+        "200":
+          description: "Success"
+  /ngt-court-cases/fetch-all-for-public-datatable:
+    post:
+      tags: ["CMS: Reports"]
+      summary: "NGT Court Cases DataTable"
+      responses:
+        "200":
+          description: "Success"
+
+  /fortnightly-reports/fetch:
+    get:
+      tags: ["CMS: Reports"]
+      summary: "Fetch Fortnightly Reports"
+      responses:
+        "200":
+          description: "Success"
+  /fortnightly-reports/fetch-all-for-public-datatable:
+    post:
+      tags: ["CMS: Reports"]
+      summary: "Fortnightly Reports DataTable"
+      responses:
+        "200":
+          description: "Success"
+
+  /studies-report/fetch-all:
+    get:
+      tags: ["CMS: Reports"]
+      summary: "Fetch Studies Reports"
+      responses:
+        "200":
+          description: "Success"
+
+  /today-aqi-bulletin-report:
+    get:
+      tags: ["CMS: Reports"]
+      summary: "Today AQI Bulletin"
+      responses:
+        "200":
+          description: "Success"
+
+  # === CMS: Media ===
+  /photoGallery/fetch-all:
+    get:
+      tags: ["CMS: Media"]
+      summary: "Fetch All Photo Galleries"
+      responses:
+        "200":
+          description: "Success"
+  /photoGallery/fetch-by-id/{id}:
+    get:
+      tags: ["CMS: Media"]
+      summary: "Fetch Photo Gallery Detail"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Success"
+
+  /videoGallery/fetch-all:
+    get:
+      tags: ["CMS: Media"]
+      summary: "Fetch All Video Galleries"
+      responses:
+        "200":
+          description: "Success"
+  /videoGallery/fetch:
+    get:
+      tags: ["CMS: Media"]
+      summary: "Fetch Video Gallery by ID"
+      responses:
+        "200":
+          description: "Success"
+
+  /gallery/events/fetch-all:
+    get:
+      tags: ["CMS: Media"]
+      summary: "Fetch All Gallery Events"
+      responses:
+        "200":
+          description: "Success"
+
+  # === CMS: Master Data ===
+  /site-settings/fetch-all:
+    get:
+      tags: ["CMS: Master Data"]
+      summary: "Fetch Site Settings"
+      responses:
+        "200":
+          description: "Success"
+  /slider/fetch-all:
+    get:
+      tags: ["CMS: Master Data"]
+      summary: "Fetch All Sliders"
+      responses:
+        "200":
+          description: "Success"
+  /socialMedia/fetch-all/:
+    get:
+      tags: ["CMS: Master Data"]
+      summary: "Fetch Social Media Links"
+      responses:
+        "200":
+          description: "Success"
+  /faq/fetch-all/:
+    get:
+      tags: ["CMS: Master Data"]
+      summary: "Fetch All FAQs"
+      responses:
+        "200":
+          description: "Success"
+  /environmental-regulation/fetch-all:
+    get:
+      tags: ["CMS: Master Data"]
+      summary: "Fetch Environmental Regulations"
+      responses:
+        "200":
+          description: "Success"
+
+  # === CMS: Navigation ===
+  /menus/fetch-by-location/{location}:
+    get:
+      tags: ["CMS: Navigation"]
+      summary: "Fetch Menus by Location"
+      parameters:
+        - name: location
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Success"
+  /pages/fetch/{url}:
+    get:
+      tags: ["CMS: Navigation"]
+      summary: "Fetch Page by URL"
+      parameters:
+        - name: url
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Success"
+  /pages/sitemap:
+    get:
+      tags: ["CMS: Navigation"]
+      summary: "Get Sitemap Pages"
+      responses:
+        "200":
+          description: "Success"
+
+  # === CMS: Directory ===
+  /contact-detail/fetch-all:
+    get:
+      tags: ["CMS: Directory & Contacts"]
+      summary: "Fetch All Contact Details"
+      responses:
+        "200":
+          description: "Success"
+  /contact-directory/fetch-all-datatable:
+    post:
+      tags: ["CMS: Directory & Contacts"]
+      summary: "Contact Directory DataTable"
+      responses:
+        "200":
+          description: "Success"
+
+  # === CMS: Directions ===
+  /direction/fetch-all-datatable/{type}:
+    post:
+      tags: ["CMS: Directions"]
+      summary: "Directions DataTable"
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "Success"
+  /letters-issued/fetch-all-datatable:
+    post:
+      tags: ["CMS: Directions"]
+      summary: "Letters Issued DataTable"
+      responses:
+        "200":
+          description: "Success"
+
+  # === Interactions ===
+  /submit-feedback:
+    post:
+      tags: [Interactions]
+      summary: "Submit Feedback"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "201":
+          description: "Submitted"
+  /submit-complaint:
+    post:
+      tags: [Interactions]
+      summary: "Submit Complaint"
+      responses:
+        "201":
+          description: "Submitted"
+
+  # === Search ===
+  /search/global:
+    post:
+      tags: [Search]
+      summary: "Global Search"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+      responses:
+        "200":
+          description: "Success"
+
+  # === Authenticated ===
+  /aqi/daily/upload:
+    post:
+      tags: [Authenticated]
+      summary: "Upload Daily AQI"
+      security:
+        - sanctum: []
+      responses:
+        "200":
+          description: "Success"
+
+components:
+  securitySchemes:
+    sanctum:
+      type: http
+      scheme: bearer
+      description: "Laravel Sanctum (Token-based) authentication."
+  schemas:
+    LayoutInitResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            settings:
+              $ref: "#/components/schemas/SiteSetting"
+            visitor_stats:
+              type: object
+            menus:
+              type: object
+
+    SiteSetting:
+      type: object
+      properties:
+        site_name:
+          type: string
+        site_name_hi:
+          type: string
+        site_address:
+          type: string
+
+    FeedbackRequest:
+      type: object
+      required: [subject_id, full_name, email, message]
+      properties:
+        subject_id:
+          type: integer
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        message:
+          type: string
+        file:
+          type: string
+          format: binary
