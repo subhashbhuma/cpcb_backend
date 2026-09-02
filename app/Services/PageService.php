@@ -6,6 +6,7 @@ use App\Repositories\PageRepository;
 use App\DTO\PageDto;
 use App\Traits\FileUploadTrait;
 use Illuminate\Support\Facades\Config;
+use Carbon\Carbon;
 
 class PageService
 {
@@ -115,15 +116,21 @@ class PageService
 
     public function publish(PageDto $pageDto, $id)
     {
+        $page = $this->findById($id);
+
         $updateData = [
             'is_approved' => $pageDto->is_approved,
             'is_published' => $pageDto->is_published,
             'remarks' => $pageDto->remarks,
             'publish_remark' => $pageDto->publish_remark,
             'updated_by' => $pageDto->updated_by,
+            'updated_at' => Carbon::parse($page->updated_at)->format('Y-m-d H:i:s'),
         ];
 
+
+        $page->touch(); // Forces updated_at to now()
         $result = $this->pageRepository->update($updateData, $id);
+
 
         if (!$result) {
             return false;

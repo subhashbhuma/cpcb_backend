@@ -31,6 +31,7 @@ class Page extends Model
         'publish_remark',
         'created_by',
         'updated_by',
+        'updated_at',
     ];
 
     protected $appends = ['is_approved_desc', 'is_published_desc', 'default_menu_desc', 'featured_image_full_path'];
