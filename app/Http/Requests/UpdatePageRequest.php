@@ -26,12 +26,22 @@ class UpdatePageRequest extends FormRequest
         return [
             'type' => 'required|string|in:website,employee',
             'menu_id' => 'nullable|exists:menus,id',
-            'title' => 'required|string|max:255|regex:/^[\p{L}\p{N}\p{M}\s\-\(\)"\'’\/\.]*$/u',
-            'title_hi' => 'required|string|max:255|regex:/^[\p{L}\p{N}\p{M}\s\-\(\)"\'’\/\.]*$/u',
+            'title' => 'required|string|max:255',
+            'title_hi' => 'required|string|max:255',
             'content' => 'nullable|string',
             'content_hi' => 'nullable|string',
             'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
+        
+        // return [
+        //     'type' => 'required|string|in:website,employee',
+        //     'menu_id' => 'nullable|exists:menus,id',
+        //     'title' => 'required|string|max:255|regex:/^[\p{L}\p{N}\p{M}\s\-\(\)"\'’\/\.]*$/u',
+        //     'title_hi' => 'required|string|max:255|regex:/^[\p{L}\p{N}\p{M}\s\-\(\)"\'’\/\.]*$/u',
+        //     'content' => 'nullable|string',
+        //     'content_hi' => 'nullable|string',
+        //     'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        // ];
     }
 
     protected function failedValidation(Validator $validator): void

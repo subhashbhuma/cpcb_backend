@@ -44,6 +44,9 @@ class UserController extends Controller
         if ($request->ajax()) {
             $users = $this->userService->findAll();
             return DataTables::of($users)
+                ->addColumn('division', function ($user) {
+                    return $user->division ? $user->division->title : 'N/A';
+                })
                 ->addColumn('roles', function ($user) {
                     return $user->roles->pluck('name')->join(', ');
                 })
@@ -54,6 +57,12 @@ class UserController extends Controller
                             $button .= '<button class="btn btn-sm btn-primary btn-reset-password" data-id="' . $user->id . '" title="Reset Password">
                                 <i class="fa fa-sync"></i>
                             </button> ';   
+                    }
+
+                    if (Auth::user()->hasRole('SUPERADMIN')) {
+                        $button .= '<button class="btn btn-sm btn-success btn-unlock-account" data-id="' . $user->id . '" title="Unlock Account">
+                            <i class="fa fa-unlock"></i>
+                        </button> ';
                     }
 
                     if (auth()->user()->can('edit user')) {
@@ -498,6 +507,36 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User password reseted successfully!'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function unlockAccount(User $user)
+    {
+        try {
+            if (!Auth::user()->hasRole('SUPERADMIN')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized action.',
+                ], 403);
+            }
+
+            $user->update([
+                'lockout_until' => null,
+                'failed_logins' => 0,
+                'current_session_id' => null,
+                'session_id' => null
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User account unlocked successfully!'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

@@ -17,7 +17,7 @@ class UserRepository
                 $query->whereNotIn('name', ['ADMIN', 'SUPERADMIN']);
             }
             $query->where('name', '!=', 'EMPLOYEE');
-        })->with('roles');
+        })->with(['roles', 'division']);
     }
 
     public function findById($id)

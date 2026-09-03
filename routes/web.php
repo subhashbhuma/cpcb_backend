@@ -120,6 +120,7 @@ Route::middleware('referer.check')->group(function () {
         Route::get('/users/{user}', [UserController::class, 'show'])->middleware('can:view user')->name('users.show');
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->middleware('can:edit user')->name('users.edit');
         Route::post('/users/reset-password/{user}', [UserController::class, 'resetPassword'])->middleware('can:reset password')->name('users.reset-password');
+        Route::post('/users/unlock-account/{user}', [UserController::class, 'unlockAccount'])->name('users.unlock-account');
         Route::put('/users/{user}', [UserController::class, 'update'])->middleware('can:edit user')->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('can:delete user')->name('users.destroy');
         Route::post('/users/fetch-for-datatable', [UserController::class, 'fetchForDatatable'])->middleware('can:view user')->name('users.fetch-for-datatable');

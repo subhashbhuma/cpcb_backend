@@ -25,6 +25,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Mobile Number</th>
+                                    <th>Division</th>
                                     <th>Roles</th>
                                     <th>Actions</th>
                                 </tr>
@@ -70,6 +71,10 @@
                 {
                     data: 'mobile_number',
                     name: 'mobile_number'
+                },
+                {
+                    data: 'division',
+                    name: 'division.title'
                 },
                 {
                     data: 'roles',
@@ -178,6 +183,63 @@
                                         icon: "error"
                                     });
                                 }
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '.btn-unlock-account', function() {
+                let id = $(this).data('id');
+
+                if (!id) return;
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "Do you want to unlock this user's account?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#28a745",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, Unlock",
+                    cancelButtonText: "Cancel"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "{{ route('users.unlock-account', ':id') }}".replace(':id', id),
+                            method: "POST",
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                            },
+                            beforeSend: function () {
+                                showLoader();
+                            },
+                            success: function(response) {
+                                hideLoader();
+                                if (response.success) {
+                                    Swal.fire({
+                                        title: "Success!",
+                                        text: response.message,
+                                        icon: "success",
+                                        confirmButtonText: "OK"
+                                    }).then(() => {
+                                        usersDatatable.ajax.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        title: "Error!",
+                                        text: response.message,
+                                        icon: "error"
+                                    });
+                                }
+                            },
+                            error: function(xhr) {
+                                hideLoader();
+                                Swal.fire({
+                                    title: "Error!",
+                                    text: xhr.responseJSON?.message || "Something went wrong. Please try again.",
+                                    icon: "error"
+                                });
                             }
                         });
                     }
