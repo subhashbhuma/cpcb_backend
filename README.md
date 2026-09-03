@@ -572,3 +572,5 @@ Regarding the `package-lock.json` file, it is automatically generated and update
 _Feel free to add more thanks as you see fit!_
 
 ---
+# cpcb_backend
+Laravel-based REST API backend for the Central Pollution Control Board (CPCB) portal, featuring RBAC, secure authentication, media &amp; dynamic content management, and air quality data services.
