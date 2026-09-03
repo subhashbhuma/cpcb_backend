@@ -87,15 +87,20 @@
                                     Password
                                 </label>
 
-                                <input type="password"
-                                    name="password"
-                                    id="password"
-                                    class="form-control"
-                                    placeholder="Password"
-                                    autocomplete="new-password"
-                                    autocorrect="off"
-                                    autocapitalize="off"
-                                    spellcheck="false">
+                                <div class="input-group">
+                                    <input type="password"
+                                        name="password"
+                                        id="password"
+                                        class="form-control"
+                                        placeholder="Password"
+                                        autocomplete="new-password"
+                                        autocorrect="off"
+                                        autocapitalize="off"
+                                        spellcheck="false">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fa fa-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="col-12">
@@ -222,6 +227,15 @@
             $('#password').val('');
         }, 100);
 
+        // Toggle Password Visibility
+        $('#togglePassword').on('click', function () {
+            const passwordInput = $('#password');
+            const icon = $('#togglePasswordIcon');
+            const isPassword = passwordInput.attr('type') === 'password';
+            passwordInput.attr('type', isPassword ? 'text' : 'password');
+            icon.toggleClass('fa-eye fa-eye-slash');
+        });
+
     });
 
     // =========================
@@ -235,6 +249,13 @@
     $("#loginForm").validate({
 
         errorClass: "text-danger validation-error",
+        errorPlacement: function (error, element) {
+            if (element.parent('.input-group').length) {
+                error.insertAfter(element.parent());
+            } else {
+                error.insertAfter(element);
+            }
+        },
 
         rules: {
             email: {

@@ -17,7 +17,7 @@
         @endphp
     @endcan
 
-    <x-page-header title="{{ $pageTitle }}" button="{!! $button ?? '' !!}" />
+    <x-page-header title="{{ $pageTitle }}" button="{!! (isset($button)) ? $button : '' !!}" />
     <!-- [ Page Header ] end -->
 
     <div class="row">

@@ -98,8 +98,12 @@
                                 </div>
                                 <div class="flex-grow-1 ms-3">
                                     <h6 class="mb-1">{{ auth()->user()->name }}</h6>
-                                    <span>
-                                        {{ auth()->user()->designation->title ?? "NA" }}
+                                 <span>
+                                        @if (!in_array(auth()->user()?->roles?->first()?->name, ['ADMIN', 'EMPLOYEE', 'SUPERADMIN']))
+                                            {{ auth()->user()?->division?->title ?? 'NA' }}
+                                        @else
+                                            {{ auth()->user()?->roles?->first()?->name ?? 'NA' }}
+                                        @endif
                                     </span>
                                 </div>
                             </div>
