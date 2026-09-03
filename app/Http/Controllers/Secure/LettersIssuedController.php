@@ -28,7 +28,7 @@ class LettersIssuedController extends Controller
 
     public function index(Request $request)
     {
-        $pageTitle = 'Latest Issued';
+        $pageTitle = 'Letters issues';
         return view('secure.letters_issued.index', compact('pageTitle'));
     }
 
@@ -161,7 +161,7 @@ class LettersIssuedController extends Controller
 
     public function create()
     {
-        $pageTitle = 'Add Latest Issued';
+        $pageTitle = 'Add Letters issues';
         $states = $this->stateService->findAll();
         $types = \Config::get('constants.LETTER_ISSUED_TYPE');
         return view('secure.letters_issued.create', compact('pageTitle', 'states', 'types'));
@@ -218,7 +218,7 @@ class LettersIssuedController extends Controller
 
     public function show($id)
     {
-        $pageTitle = 'View Latest Issued';
+        $pageTitle = 'View Letters issues';
         $record = $this->service->findById($id);
 
         return view('secure.letters_issued.show', compact('record', 'pageTitle'));
@@ -226,7 +226,7 @@ class LettersIssuedController extends Controller
 
     public function edit($id)
     {
-        $pageTitle = 'Edit Latest Issued';
+        $pageTitle = 'Edit Letters issues';
         $record = $this->service->findById($id);
         $states = $this->stateService->findAll();
         $types = \Config::get('constants.LETTER_ISSUED_TYPE');

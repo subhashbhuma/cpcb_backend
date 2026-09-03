@@ -25,7 +25,7 @@ class MediaController extends Controller
      */
     public function index(Request $request)
     {
-        $pageTitle = 'Medias';
+        $pageTitle = 'File Manager';
         $medias = $this->mediaService->findAllWithPagination();
         return view('secure.medias.index', compact('pageTitle', 'medias'));
     }
@@ -35,7 +35,7 @@ class MediaController extends Controller
      */
     public function create()
     {
-        $pageTitle = 'Add Medias';
+        $pageTitle = 'Add File';
         return view('secure.medias.create', compact('pageTitle'));
     }
 
@@ -92,7 +92,7 @@ class MediaController extends Controller
      */
     public function show(string $id)
     {
-        $pageTitle = 'View Medias';
+        $pageTitle = 'View File';
         $media = $this->mediaService->findById($id);
         return view('secure.medias.show', compact('media', 'pageTitle'));
     }
@@ -102,7 +102,7 @@ class MediaController extends Controller
      */
     public function edit(string $id)
     {
-        $pageTitle = 'Edit Medias';
+        $pageTitle = 'Edit File';
         $media = $this->mediaService->findById($id);
         return view('secure.medias.edit', compact('media', 'pageTitle'));
     }

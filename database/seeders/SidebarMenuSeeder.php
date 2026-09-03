@@ -20,7 +20,7 @@ class SidebarMenuSeeder extends Seeder
             ['title' => 'Website Setup', 'is_caption' => true, 'order' => 10],
 
             ['title' => 'Pages', 'icon' => 'ti ti-file', 'group' => 'Page', 'url' => 'secure/pages', 'order' => 11],
-            ['title' => 'Medias', 'icon' => 'ti ti-photo', 'group' => 'Media', 'url' => 'secure/medias', 'order' => 12],
+            ['title' => 'File Manager', 'icon' => 'ti ti-photo', 'group' => 'Media', 'url' => 'secure/medias', 'order' => 12],
 
             // Who Is Who group
             ['title' => 'Who Is Who Setup', 'icon' => 'ti ti-users', 'group' => 'Who is who', 'url' => 'secure/who-is-who', 'order' => 13],
@@ -97,7 +97,7 @@ class SidebarMenuSeeder extends Seeder
                     ['title' => 'Category', 'group' => 'Direction Category', 'url' => 'secure/direction_category'],
                     ['title' => 'Issues To', 'group' => 'Direction Issued To', 'url' => 'secure/direction_issued_to'],
                     ['title' => 'Directions', 'group' => 'Direction', 'url' => 'secure/direction'],
-                    ['title' => 'Latest Issued', 'group' => 'Latest Issued', 'url' => 'secure/letters-issued'],
+                    ['title' => 'Letters issues', 'group' => 'Latest Issued', 'url' => 'secure/letters-issued'],
                 ]
             ],
 

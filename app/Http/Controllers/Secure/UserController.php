@@ -167,7 +167,7 @@ class UserController extends Controller
                 return strtolower(trim($item->group));
             });
 
-        $divisions = Division::all();
+        $divisions = Division::where('is_new',1)->get(['id','title']);
 
         return view('secure.users.create', compact(
             'pageTitle',
@@ -398,8 +398,7 @@ class UserController extends Controller
             ->groupBy(function($item) {
                 return strtolower(trim($item->group));
             });
-
-        $divisions = Division::all();
+        $divisions = Division::where('is_new',1)->get(['id','title']);
 
         return view('secure.users.edit', compact(
             'user',

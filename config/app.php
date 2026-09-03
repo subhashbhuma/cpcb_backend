@@ -147,4 +147,5 @@ return [
     'default_password' => env('DEFAULT_PASSWORD', 'Password@123'),
     'is_dummy_otp' => env('IS_DUMMY_OTP', false),
     'otp_expire_time' => env('OTP_EXPIRE_TIME', 10),
+    'password_expiry_days' => (int) env('PASSWORD_EXPIRY_DAYS', 90),
 ];

@@ -49,7 +49,7 @@ class ProfileService
 
     public function changePassword(PasswordDto $passwordDto, $id)
     {
-        $expiryDays = env('PASSWORD_EXPIRY_DAYS', 90);
+        $expiryDays = (int) config('app.password_expiry_days', 90);
         $user = $this->userRepository->update([
             'password' => $passwordDto->password,
             'password_changed_at' => now(),

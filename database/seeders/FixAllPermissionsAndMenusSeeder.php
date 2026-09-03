@@ -102,12 +102,12 @@ class FixAllPermissionsAndMenusSeeder extends Seeder
             'approve subject area setup' => 'approve subject area',
 
             // 11. Latest Issued -> Letters Issued mapping
-            'view latest issued' => 'view letters_issued',
-            'add latest issued' => 'add letters_issued',
-            'edit latest issued' => 'edit letters_issued',
-            'delete latest issued' => 'delete letters_issued',
-            'publish latest issued' => 'publish letters_issued',
-            'approve latest issued' => 'approve letters_issued',
+            'view Letters issues' => 'view letters_issued',
+            'add Letters issues' => 'add letters_issued',
+            'edit Letters issues' => 'edit letters_issued',
+            'delete Letters issues' => 'delete letters_issued',
+            'publish Letters issues' => 'publish letters_issued',
+            'approve Letters issues' => 'approve letters_issued',
 
             // 12. NGT Court Cases (plural -> singular)
             'view ngt court cases' => 'view ngt court case',
