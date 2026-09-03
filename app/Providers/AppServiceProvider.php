@@ -54,9 +54,14 @@ class AppServiceProvider extends ServiceProvider
         View::composer('includes.secure.sidebar', function ($view) {
             if (auth()->check()) {
                 $user = auth()->user();
-                $cacheKey = 'sidebar_menus_' . $user->id . '_' . ($user->updated_at ? $user->updated_at->timestamp : 0);
 
-                $filteredMenus = Cache::remember($cacheKey, 300, function () use ($user) {
+                // Cache key includes permission count + role names so it auto-invalidates
+                // when permissions or roles change (even if users.updated_at doesn't change)
+                $permCount = $user->getAllPermissions()->count();
+                $roleHash = md5($user->getRoleNames()->implode(','));
+                $cacheKey = 'sidebar_menus_' . $user->id . '_' . $permCount . '_' . $roleHash;
+
+                $filteredMenus = Cache::remember($cacheKey, 60, function () use ($user) {
 
                     $location = $user->hasRole('EMPLOYEE')
                         ? 'employee'

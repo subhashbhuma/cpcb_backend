@@ -53,8 +53,12 @@ class PageController extends Controller
      */
     private function flattenMenuTreeMemory($menu, $groupedMenus, $allMenusById, $prefix, $depth, $locationName, &$rows)
     {
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('ADMIN') || $user->hasRole('SUPERADMIN');
+
         // Check if this menu or any descendant has a page AND the user has permission to see it
-        if (!$this->isMenuAccessible($menu, $groupedMenus))
+        // For ADMIN/SUPERADMIN, we want to show all menus unconditionally
+        if (!$isAdmin && !$this->isMenuAccessible($menu, $groupedMenus))
             return;
 
         // Build parent path by walking up the parent chain (ancestors only, excluding current)
@@ -66,7 +70,7 @@ class PageController extends Controller
         }
         $parentPath = count($parentParts) > 0 ? implode(' → ', $parentParts) : '';
 
-        if ($menu->pages && $menu->pages->count() > 0) {
+        if ($menu->pages && $menu->pages->count() > 0 && ($isAdmin || $this->userHasAnyPermission($menu))) {
             foreach ($menu->pages as $index => $page) {
                 $rows[] = [
                     'id' => $menu->id,
@@ -77,10 +81,11 @@ class PageController extends Controller
                     'page' => $page,
                     'menu_url' => $menu->url ?? '',
                     'location_name' => $locationName,
-                    'menu_obj' => $menu, // Store object to avoid N+1 in actions
+                    'menu_obj' => $menu,
                 ];
             }
-        } else {
+        } elseif ($isAdmin && (!$menu->pages || $menu->pages->count() == 0)) {
+            // Only ADMIN/SUPERADMIN can see menus that don't have pages yet
             $rows[] = [
                 'id' => $menu->id,
                 'sl_no' => $prefix,
@@ -94,6 +99,7 @@ class PageController extends Controller
             ];
         }
 
+        // Always recurse into children (even if current menu has no pages)
         $children = $groupedMenus->get($menu->id) ?? collect();
         $childIndex = 1;
         foreach ($children as $child) {
