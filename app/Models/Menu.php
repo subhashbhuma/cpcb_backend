@@ -22,10 +22,10 @@ class Menu extends Model
     protected static function booted()
     {
         static::saving(function ($menu) {
-            // Auto-assign a permission group based on the title if none is set.
+            // Auto-assign a permission group based on the title and parent if none is set.
             // This ensures all menus appear in the User Permission Matrix.
             if (empty($menu->permission_group) && !($menu->is_caption ?? false)) {
-                $menu->permission_group = $menu->title;
+                $menu->permission_group = static::buildUniquePermissionGroup($menu);
             }
         });
 
@@ -247,5 +247,16 @@ class Menu extends Model
         return $timestamp
             ? Carbon::parse($timestamp)->format('d-m-Y H:i:s')
             : null;
+    }
+
+    public static function buildUniquePermissionGroup($menu)
+    {
+        $parent = $menu->parent;
+        // If parent exists and title is different, prepend it
+        if ($parent && strtolower($parent->title) !== strtolower($menu->title)) {
+            return $parent->title . ' > ' . $menu->title;
+        }
+        
+        return $menu->title;
     }
 }

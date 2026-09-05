@@ -44,7 +44,7 @@
             var usersDatatable = $('#users-datatable').DataTable({
                 processing: true,
                 serverSide: true,
-                ordering: false,
+                ordering: true,
                 ajax: {
                     url: "{{ route('users.fetch-for-datatable') }}",
                     type: "POST",
@@ -78,12 +78,14 @@
                 },
                 {
                     data: 'roles',
-                    name: 'roles'
+                    name: 'roles.name'
                 },
                 {
                     data: 'action',
                     name: 'action',
                     width: '10%',
+                    orderable: false,
+                    searchable: false
                 }
                 ]
             });

@@ -50,6 +50,25 @@ class UserController extends Controller
                 ->addColumn('roles', function ($user) {
                     return $user->roles->pluck('name')->join(', ');
                 })
+                ->orderColumn('roles.name', function ($query, $order) {
+                    $query->orderBy(
+                        \Illuminate\Support\Facades\DB::table('roles')
+                            ->select('name')
+                            ->join('model_has_roles', 'roles.id', '=', 'model_has_roles.role_id')
+                            ->whereColumn('model_has_roles.model_id', 'users.id')
+                            ->where('model_has_roles.model_type', \App\Models\User::class)
+                            ->limit(1),
+                        $order
+                    );
+                })
+                ->orderColumn('division.title', function ($query, $order) {
+                    $query->orderBy(
+                        \App\Models\Division::select('title')
+                            ->whereColumn('divisions.id', 'users.division_id')
+                            ->limit(1),
+                        $order
+                    );
+                })
                 ->addColumn('action', function ($user) {
                     $button = '';
 
@@ -184,6 +203,19 @@ class UserController extends Controller
         // Skip if this menu's permission group is in the exclude list (singular/plural aware)
         if ($menu->permission_group && $this->isExcludedGroup($menu->permission_group, $excludeGroups)) {
             return;
+        }
+
+        // Deduplicate menus that share the exact same permission group,
+        // so they don't appear multiple times in the matrix and cause cascading selections.
+        static $seenGroups = [];
+        // When depth is 0, we might be starting a new root tree, but we want deduplication
+        // to span the whole request. We can track it globally per request.
+        if ($menu->permission_group) {
+            $key = strtolower(trim($menu->permission_group));
+            if (isset($seenGroups[$key])) {
+                return;
+            }
+            $seenGroups[$key] = true;
         }
 
         // Add current menu
