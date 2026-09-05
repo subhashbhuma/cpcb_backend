@@ -1,7 +1,7 @@
 <div class="row">
     <!-- Admin/Super Admin gets all cards -->
     <div class="col-12 mb-3">
-        <h4 class="text-primary">{{ auth()->user()->hasRole('SUPER_ADMIN') ? 'Super Admin' : (auth()->user()->hasRole('ADMIN') ? 'Admin' : 'Employee') }} Dashboard</h4>
+        <h4 class="text-primary">Dashboard</h4>
     </div>
     
 

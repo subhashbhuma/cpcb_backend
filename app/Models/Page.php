@@ -88,7 +88,7 @@ class Page extends Model
 
     public function files()
     {
-        return $this->hasMany(PageFile::class)->orderBy('order_number', 'desc');
+        return $this->hasMany(PageFile::class)->orderBy('order_number', 'asc');
     }
 
 

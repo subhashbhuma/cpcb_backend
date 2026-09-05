@@ -126,6 +126,12 @@
             background: #e3e6ea;
             border-radius: 10px;
         }
+
+        /* Fix sidebar scrolling issue by matching height calc to actual header height */
+        .pc-sidebar .navbar-content {
+            height: calc(100vh - 120px) !important;
+            overflow-y: auto;
+        }
     </style>
     @yield('style')
 

@@ -71,7 +71,7 @@ class PageFilesImport implements ToModel, WithHeadingRow
         $pageFile->update([
             'title' => isset($row['title']) ? strip_tags((string) $row['title']) : $pageFile->title,
             'title_hi' => isset($row['title_hi']) ? strip_tags((string) $row['title_hi']) : $pageFile->title_hi,
-            'upload_date' => $uploadDate ?? $pageFile->upload_date,
+            'upload_date' => $uploadDate ?? null,
             'order_number' => isset($row['order_number']) ? (int) $row['order_number'] : $pageFile->order_number,
             'updated_by' => Auth::id(),
         ]);
@@ -99,7 +99,7 @@ class PageFilesImport implements ToModel, WithHeadingRow
             'page_id' => $this->pageId,
             'title' => $title,
             'title_hi' => $titleHi,
-            'upload_date' => $uploadDate ?? date('Y-m-d'),
+            'upload_date' => $uploadDate ?? null,
             'order_number' => isset($row['order_number']) ? (int) $row['order_number'] : 0,
             'file_name' => $row['file_name'] ?? null,
             'file_name_hi' => $row['file_name_hi'] ?? null,

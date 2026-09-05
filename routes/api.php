@@ -198,13 +198,13 @@ Route::get('/visitor/stats', [VisitorController::class, 'stats'])->name('visitor
 
 
 Route::get('/menus/fetch-by-location/{location}', [MenuController::class, 'fetchAllMenusByLocation'])->name('menus.fetch-all-for-public-by-location');
-Route::get('/menus/fetch-by-url/', [MenuController::class, 'fetchAllMenusByUrl'])->name('menus.fetch-all-for-public-by-url');
+Route::get('/menus/fetch-by-url', [MenuController::class, 'fetchAllMenusByUrl'])->name('menus.fetch-all-for-public-by-url');
 Route::get('/menus/breadcrumb', [MenuController::class, 'getBreadcrumb'])->name('menus.get-breadcrumb');
 Route::get('/menus/fetch-inner-menus-by-parent-title', [MenuController::class, 'fetchInnerMenusByParentTitle'])->name('menus.fetch-inner-menus-by-parent-title');
 Route::get('/menus/fetch-inner-menus-by-parent-full-title', [MenuController::class, 'fetchInnerMenusByParentFullTitle'])->name('menus.fetch-inner-menus-by-parent-full-title');
 Route::get('/menus/fetch-all', [MenuController::class, 'fetchAllMenus'])->name('menus.fetch-all');
 Route::get('/pages/fetch/{url}', [PageController::class, 'findByUrlForPublic'])->name('menus.fetch-by-id-for-public');
-Route::get('/pages/fetch-by-menu/', [PageController::class, 'findByMenuForPublic'])->name('menus.fetch-by-menu-for-public');
+Route::get('/pages/fetch-by-menu', [PageController::class, 'findByMenuForPublic'])->name('menus.fetch-by-menu-for-public');
 
 // for checking today entries
 Route::get('/today-entries', [DashboardController::class, 'getTodayEntries'])->name('today-entries');
