@@ -142,16 +142,16 @@
                                 @endif
                             </div>
                             <div class="col-md-6 col-6 mb-3">
-                                <label class="form-label">Start Date:</label>
+                                <label class="form-label">Issue Date:</label>
                                 <input type="text" name="start_date" class="form-control"
                                     value="{{ $announcement->start_date?date('d-m-Y', strtotime($announcement->start_date)):null }}" />
                             </div>
 
-                            <div class="col-md-6 col-6 mb-3">
+                            <!-- <div class="col-md-6 col-6 mb-3">
                                 <label class="form-label">End Date:</label>
                                 <input type="text" name="end_date" class="form-control"
                                     value="{{ $announcement->end_date?date('d-m-Y', strtotime($announcement->end_date)):null }}" />
-                            </div>
+                            </div> -->
                         </div>
 
 

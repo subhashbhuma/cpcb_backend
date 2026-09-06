@@ -53,7 +53,8 @@ class UserService
 
         // Sync direct user permissions (per-user menu permissions)
         if (!empty($userDto->permissions)) {
-            $user->syncPermissions($userDto->permissions);
+            $expandedPermissions = $this->expandPermissions($userDto->permissions);
+            $user->syncPermissions($expandedPermissions);
         }
 
         // Flush Spatie permission cache so $user->can() checks are fresh
@@ -90,7 +91,8 @@ class UserService
         $user->assignRole($userDto->roles);
 
         // Sync direct user permissions (per-user menu permissions)
-        $user->syncPermissions($userDto->permissions ?? []);
+        $expandedPermissions = $this->expandPermissions($userDto->permissions ?? []);
+        $user->syncPermissions($expandedPermissions);
 
         // Flush Spatie permission cache so $user->can() checks are fresh
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
@@ -132,5 +134,53 @@ class UserService
         }
 
         return $user;
+    }
+
+    /**
+     * Expands menu-group permissions into their corresponding route-level permissions.
+     */
+    private function expandPermissions(array $permissions): array
+    {
+        if (empty($permissions)) {
+            return [];
+        }
+
+        $map = config('route_permission_map');
+        if (empty($map)) {
+            return $permissions;
+        }
+
+        $expanded = $permissions;
+        $actions = ['view', 'add', 'edit', 'delete', 'publish', 'approve'];
+
+        // Pre-compute the mapping for action + group combinations
+        $permNameMap = [];
+        foreach ($map as $menuGroup => $routeEntity) {
+            $menuGroupLower = strtolower(trim($menuGroup));
+            $routeEntityLower = strtolower(trim($routeEntity));
+
+            if ($menuGroupLower === $routeEntityLower) {
+                continue;
+            }
+
+            foreach ($actions as $action) {
+                $oldPerm = strtolower($action . ' ' . $menuGroupLower);
+                $newPerm = strtolower($action . ' ' . $routeEntityLower);
+                $permNameMap[$oldPerm] = $newPerm;
+            }
+        }
+
+        // Add matching route permissions
+        foreach ($permissions as $perm) {
+            $permLower = strtolower($perm);
+            if (isset($permNameMap[$permLower])) {
+                $routePerm = $permNameMap[$permLower];
+                if (!in_array($routePerm, $expanded)) {
+                    $expanded[] = $routePerm;
+                }
+            }
+        }
+
+        return array_unique($expanded);
     }
 }

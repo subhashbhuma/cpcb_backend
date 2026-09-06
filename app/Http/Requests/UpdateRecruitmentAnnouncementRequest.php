@@ -50,7 +50,7 @@ class UpdateRecruitmentAnnouncementRequest extends FormRequest
         'title_hi.max' => 'The Hindi Title must not exceed 255 characters.',
         'title_hi.regex' => 'Please enter a valid Hindi Title.',
 
-        'start_date.date' => 'Please enter a valid Start Date.',
+        'start_date.date' => 'Please enter a valid Issue Date.',
 
         'end_date.date' => 'Please enter a valid End Date.',
         'end_date.after_or_equal' => 'The End Date must be the same as or later than the Start Date.',
