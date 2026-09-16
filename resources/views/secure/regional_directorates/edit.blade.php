@@ -57,6 +57,18 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
+                                <label for="image" class="form-label">Profile Picture / Image</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                <small class="text-muted">Allowed types: jpg, jpeg, png, gif, webp. Max size: 2MB.</small>
+                                @if ($regionalDirectorate->image)
+                                    <div class="mt-2">
+                                        <img src="{{ asset('storage/' . config('file_paths.REGIONAL_DIRECTORATE_IMAGE_PATH') . '/' . $regionalDirectorate->image) }}"
+                                            alt="Profile Picture" class="img-thumbnail" style="max-height: 80px;">
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="col-md-6 mb-3">
                                 <label for="order" class="form-label">Order <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="order" name="order"
                                     value="{{ old('order', $regionalDirectorate->order) }}" min="0" required>
@@ -72,6 +84,8 @@
                                 <textarea class="form-control" id="hi-page-editor"
                                     name="description_hi">{{ old('description_hi', $regionalDirectorate->description_hi) }}</textarea>
                             </div>
+
+                            <x-office-items-form :personnels="$regionalDirectorate->personnels" :profileActivities="$regionalDirectorate->profileActivities" :states="$regionalDirectorate->states" />
                         </div>
 
                         <div class="col-12 text-center">
@@ -85,7 +99,9 @@
 @endsection
 
 @section('pages-scripts')
+    <x-office-items-scripts />
     <script @cspNonce type="text/javascript">
+
         $(document).ready(function () {
             // Validation
             $('#editForm').validate({

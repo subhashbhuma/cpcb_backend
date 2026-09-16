@@ -87,7 +87,16 @@
                         role="button" aria-haspopup="false" data-bs-auto-close="outside" aria-expanded="false">
                         <img src="{{ asset('storage' . Config::get('file_paths')['USER_PROFILE_IMAGE_PATH'] . '/' . auth()->user()->profile_image) }}"
                             alt="user-image" class="user-avtar">
-                        <span>{{ auth()->user()->name }}</span>
+                        <span class="d-flex flex-column text-start lh-sm">
+                            <span>{{ auth()->user()->name }}</span>
+                            <small class="text-muted">
+                                {{ auth()->user()->getRoleNames()->implode(', ') ?: 'NA' }}
+                                @if(Auth::user()->roles->first()->name !== 'EMPLOYEE')
+                                <span class="mx-1">|</span>
+                                {{ auth()->user()?->division?->title ?? 'NA' }}
+                                @endif
+                            </small>
+                        </span>
                     </a>
                     <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
                         <div class="dropdown-header">
@@ -98,13 +107,14 @@
                                 </div>
                                 <div class="flex-grow-1 ms-3">
                                     <h6 class="mb-1">{{ auth()->user()->name }}</h6>
-                                 <span>
-                                        @if (!in_array(auth()->user()?->roles?->first()?->name, ['ADMIN', 'EMPLOYEE', 'SUPERADMIN']))
+                                    <div class="small text-muted">
+                                        <div>
+                                            {{ auth()->user()->getRoleNames()->implode(', ') ?: 'NA' }}
+                                        </div>
+                                        <div>
                                             {{ auth()->user()?->division?->title ?? 'NA' }}
-                                        @else
-                                            {{ auth()->user()?->roles?->first()?->name ?? 'NA' }}
-                                        @endif
-                                    </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

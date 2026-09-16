@@ -39,6 +39,17 @@
                             <label class="form-label"><strong>Order:</strong></label>
                             <p class="mb-0">{{ $headOffice->order ?? '0' }}</p>
                         </div>
+                        <div class="col-md-6 col-12 card py-2 bg-light mb-3">
+                            <label class="form-label"><strong>Profile Picture:</strong></label>
+                            <div>
+                                @if ($headOffice->image)
+                                    <img src="{{ asset('storage/' . config('file_paths.HEAD_OFFICE_IMAGE_PATH') . '/' . $headOffice->image) }}"
+                                        alt="Profile Picture" class="img-thumbnail" style="max-height: 100px;">
+                                @else
+                                    <p class="mb-0 text-muted">—</p>
+                                @endif
+                            </div>
+                        </div>
 
                         <div class="col-12 card py-2 bg-light mb-3">
                             <label class="form-label"><strong>Description (English):</strong></label>
@@ -80,11 +91,14 @@
                             </p>
                         </div>
 
+                        <x-office-items-show :personnels="$headOffice->personnels" :profileActivities="$headOffice->profileActivities" />
+
                     </div>
                 </div>
             </div>
 
             <hr>
+
 
             <div class="card card-body">
                 <div class="row">

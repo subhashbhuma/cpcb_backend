@@ -19,6 +19,7 @@ class HeadOffice extends Model
         'title',
         'title_hi',
         'email',
+        'image',
         'ext_number',
         'description',
         'description_hi',
@@ -85,8 +86,37 @@ class HeadOffice extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
     public function updated_by_user()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function personnels()
+    {
+        return $this->hasMany(OfficePersonnel::class, 'office_id')
+            ->where('office_type', 'head_offices')
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc');
+    }
+
+    public function active_personnels()
+    {
+        return $this->personnels()->where('record_status', 1);
+    }
+
+    public function profileActivities()
+    {
+        return $this->hasMany(OfficeProfileActivity::class, 'office_id')
+            ->where('office_type', 'head_offices')
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc');
+    }
+
+    public function active_profile_activities()
+    {
+        return $this->profileActivities()->where('record_status', 1);
+    }
 }
+
+

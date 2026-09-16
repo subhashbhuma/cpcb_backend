@@ -135,4 +135,7 @@ return [
 
     'LETTERS_ISSUED_FILE_EN_PATH' => 'letters_issued/en',
     'LETTERS_ISSUED_FILE_HI_PATH' => 'letters_issued/hi',
+
+    'HEAD_OFFICE_IMAGE_PATH' => 'head_offices/profile_images',
+    'REGIONAL_DIRECTORATE_IMAGE_PATH' => 'regional_directorates/profile_images',
 ];

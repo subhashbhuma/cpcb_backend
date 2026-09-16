@@ -28,7 +28,7 @@ class RegionalDirectorateRepository
 
     public function findById($id): ?RegionalDirectorate
     {
-        return RegionalDirectorate::find($id);
+        return RegionalDirectorate::with(['personnels', 'profileActivities', 'states'])->find($id);
     }
 
     public function findAll()
@@ -42,6 +42,8 @@ class RegionalDirectorateRepository
             ->where('is_approved', 1)
             ->orderBy('order', 'asc')
             ->orderBy('id', 'asc')
+            ->with(['active_personnels', 'active_profile_activities', 'active_states'])
             ->get();
     }
 }
+

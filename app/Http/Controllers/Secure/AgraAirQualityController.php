@@ -14,6 +14,7 @@ use App\Services\AgraAirQualityService;
 use App\Traits\FileUploadTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
 use App\Http\Resources\PublicQualityZoneResource;
@@ -357,34 +358,93 @@ class AgraAirQualityController extends Controller
 
     public function getMonthlyAirQuality(Request $request)
     {
-        $date = null;
-        if (!$request->get('date')) {
-            $date = Carbon::now();
-        } else {
-            $date = Carbon::parse($request->get('date'));
+        $requestedDate = $request->get('date');
+        $requestedMonth = $request->get('month');
+        $requestedYear = $request->get('year');
+        $isArchive = $request->get('type') === 'archive' || $request->boolean('is_archive');
+
+        $month = null;
+        $year = null;
+
+        if ($requestedMonth && $requestedYear) {
+            $month = (int)$requestedMonth;
+            $year = (int)$requestedYear;
+        } elseif ($requestedDate) {
+            try {
+                $parsed = Carbon::parse($requestedDate);
+                $reqM = $parsed->month;
+                $reqY = $parsed->year;
+
+                // Check if this requested month has data
+                $hasData = AgraAirQuality::whereMonth('for_date', $reqM)
+                    ->whereYear('for_date', $reqY)
+                    ->exists();
+
+                if ($hasData) {
+                    $month = $reqM;
+                    $year = $reqY;
+                }
+            } catch (\Exception $e) {
+                // Fallback below
+            }
         }
-        $month = $date->month;
-        $year = $date->year;
+
+        // Fetch distinct available months with data
+        $distinctMonths = DB::table('agra_air_qualities')
+            ->whereNull('deleted_at')
+            ->whereNotNull('for_date')
+            ->where('for_date', '>', '1970-01-01')
+            ->selectRaw("to_char(for_date, 'YYYY-MM') as ym, EXTRACT(YEAR FROM for_date)::integer as year, EXTRACT(MONTH FROM for_date)::integer as month, COUNT(*)::integer as record_count")
+            ->groupBy('ym', 'year', 'month')
+            ->orderBy('ym', 'desc')
+            ->get();
+
+        // If no month/year or requested month has no data, fallback
+        if (!$month || !$year) {
+            if ($isArchive && $distinctMonths->count() > 1) {
+                // For archive by default, show one month previous to the latest available month
+                $target = $distinctMonths->get(1);
+                $month = (int)$target->month;
+                $year = (int)$target->year;
+            } elseif ($distinctMonths->isNotEmpty()) {
+                $target = $distinctMonths->first();
+                $month = (int)$target->month;
+                $year = (int)$target->year;
+            } else {
+                $now = Carbon::now();
+                $month = $now->month;
+                $year = $now->year;
+            }
+        }
 
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-        $daysInMonth = $startDate->daysInMonth;
 
         $zones = QualityZone::orderBy('id', "asc")->get();
         $records = AgraAirQuality::whereMonth('for_date', $month)
             ->whereYear('for_date', $year)
-            ->get()
-            ->groupBy(['for_date', 'quality_zone_id']);
+            ->orderBy('for_date', 'asc')
+            ->get();
+
+        // Get only the dates that actually have data
+        $datesWithData = $records->pluck('for_date')
+            ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
+            ->unique()
+            ->sort()
+            ->values();
+
+        $recordsByDateAndZone = $records->groupBy(function ($item) {
+            return Carbon::parse($item->for_date)->format('Y-m-d');
+        })->map(function ($dateRecords) {
+            return $dateRecords->groupBy('quality_zone_id');
+        });
 
         $report = [];
-
-        for ($i = 1; $i <= $daysInMonth; $i++) {
-            $currentDate = Carbon::createFromDate($year, $month, $i)->format('Y-m-d');
-            $displayDate = Carbon::parse($currentDate)->format('d-m-Y');
-
+        foreach ($datesWithData as $dateStr) {
+            $displayDate = Carbon::parse($dateStr)->format('d-m-Y');
             $row = ['date' => $displayDate];
 
             foreach ($zones as $zone) {
-                $record = $records->get($currentDate)?->get($zone->id)?->first();
+                $record = $recordsByDateAndZone->get($dateStr)?->get($zone->id)?->first();
 
                 $row['zones'][$zone->title] = [
                     'zone_id' => $zone->id,
@@ -394,20 +454,37 @@ class AgraAirQualityController extends Controller
                     'title_hi' => $record ? $record->title_hi : null,
                     'file_path_en' => $record ? $record->file_path_en : null,
                     'file_path_hi' => $record ? $record->file_path_hi : null,
-                    'display_text' => $record ? $displayDate : Carbon::parse($currentDate)->format('d.m.Y'),
+                    'display_text' => $record ? $displayDate : Carbon::parse($dateStr)->format('d.m.Y'),
                 ];
             }
 
             $report[] = $row;
         }
 
+        $availableMonths = $distinctMonths->map(function ($row) {
+            $carbonDate = Carbon::createFromDate((int)$row->year, (int)$row->month, 1);
+            return [
+                'ym' => $row->ym,
+                'year' => (int)$row->year,
+                'month' => (int)$row->month,
+                'month_name' => $carbonDate->format('F, Y'),
+                'count' => (int)$row->record_count,
+            ];
+        });
+
+        $availableYears = $availableMonths->pluck('year')->unique()->values();
+
         return response()->json([
             'month_name' => $startDate->format('F, Y'),
+            'year' => $year,
+            'month' => $month,
             'zones' => $zones->pluck('title'),
             'report' => $report,
             'lastUpdatedOn' => AgraAirQuality::getLastUpdatedOrCreatedAt(),
             'zone_lists' => PublicQualityZoneResource::collection($zones),
-            'agra_air_quality_file' => AgraAirQuality::getAgraAirQualityFile()
+            'agra_air_quality_file' => AgraAirQuality::getAgraAirQualityFile(),
+            'available_months' => $availableMonths,
+            'available_years' => $availableYears,
         ]);
     }
 

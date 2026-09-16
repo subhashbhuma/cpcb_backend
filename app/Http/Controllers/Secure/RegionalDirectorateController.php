@@ -100,10 +100,16 @@ class RegionalDirectorateController extends Controller
                 null,
                 auth()->id(),
                 null,
-                $request->input('order', 0)
+                $request->input('order', 0),
+                $request->file('image')
             );
 
-            $this->regionalDirectorateService->create($dto);
+            $this->regionalDirectorateService->create(
+                $dto,
+                $request->input('personnels', []),
+                $request->input('profile_activities', []),
+                $request->input('states', [])
+            );
 
             return response()->json([
                 'success' => true,
@@ -162,10 +168,17 @@ class RegionalDirectorateController extends Controller
                 null,
                 $regionalDirectorate->created_by,
                 auth()->id(),
-                $request->input('order', 0)
+                $request->input('order', 0),
+                $request->file('image')
             );
 
-            $this->regionalDirectorateService->update($dto, $id);
+            $this->regionalDirectorateService->update(
+                $dto,
+                $id,
+                $request->input('personnels', []),
+                $request->input('profile_activities', []),
+                $request->input('states', [])
+            );
 
             return response()->json([
                 'success' => true,

@@ -13,7 +13,7 @@ class HeadOfficeRepository
 
     public function findById($id)
     {
-        return HeadOffice::with('division')->findOrFail($id);
+        return HeadOffice::with(['division', 'personnels', 'profileActivities'])->findOrFail($id);
     }
 
     public function create(array $data)
@@ -40,7 +40,7 @@ class HeadOfficeRepository
             ->where('is_approved', 1)
             ->orderBy('order', 'asc')
             ->latest()
-            ->with('division');
+            ->with(['division', 'active_personnels', 'active_profile_activities']);
 
         if ($limit) {
             return $query->take($limit)->get();
@@ -49,3 +49,4 @@ class HeadOfficeRepository
         return $query->get();
     }
 }
+

@@ -1305,5 +1305,34 @@ Route::get('/view-logs', function () {
     return response(implode("", $lines), 200, ['Content-Type' => 'text/plain']);
 });
 
+Route::get('/openpdffile.php', function (\Illuminate\Http\Request $request) {
+    $id = $request->query('id');
+    if ($id) {
+        $controller = app(\App\Http\Controllers\CMSFileController::class);
+        $resolveRes = $controller->resolveOldSiteFile($request);
+        $data = json_decode($resolveRes->getContent(), true);
+        if (!empty($data['status']) && !empty($data['code'])) {
+            $fileReq = new \Illuminate\Http\Request(['code' => $data['code']]);
+            return $controller->getfileurl($fileReq);
+        }
+    }
+    return response()->json(['status' => false, 'error' => 'File not found'], 404);
+});
+
+// Fallback for direct legacy file paths (e.g. employee/ama/file.pdf or uploads/AQM/file.pdf)
+Route::get('/{any}', function (string $any, \Illuminate\Http\Request $request) {
+    $fileName = basename($any);
+    $controller = app(\App\Http\Controllers\CMSFileController::class);
+    $resolveReq = new \Illuminate\Http\Request(['id' => $fileName]);
+    $resolveRes = $controller->resolveOldSiteFile($resolveReq);
+    $data = json_decode($resolveRes->getContent(), true);
+    if (!empty($data['status']) && !empty($data['code'])) {
+        $fileReq = new \Illuminate\Http\Request(['code' => $data['code']]);
+        return $controller->getfileurl($fileReq);
+    }
+    return response()->json(['status' => false, 'error' => 'File not found'], 404);
+})->where('any', '.*?\.(pdf|PDF|doc|DOC|docx|DOCX|xls|XLS|xlsx|XLSX|ppt|PPT|pptx|PPTX|zip|ZIP|rar|RAR|jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF|webp|WEBP)$');
+
 // Website routes
 // require base_path('routes/website.php');
+

@@ -364,17 +364,19 @@ class PageController extends Controller
                     return "—";
                 })
                 ->addColumn('status', function ($row) {
-                    $page = $row['page'];
-                    if ($page) {
-                        if ($page->is_published) {
-                            return '<span class="badge bg-success">Published</span>';
-                        } else {
-                            return '<span class="badge bg-warning">Draft</span>';
+                      $page = $row['page'];
+
+                        if (!$page) {
+                            return '<span class="text-muted">—</span>';
                         }
-                    }
-                     return "—";
-                    // return '<span class="text-muted">—</span>';
-                })
+
+                       return $page
+                        ? statusBadge(
+                            $page->is_approved,
+                            $page->is_published
+                        )
+                        : '<span class="text-muted">—</span>';
+                                })
                 ->addColumn('page_url', function ($row) {
                     $menuObj = $row['menu_obj'];
                     return $menuObj->url && $menuObj->url != '#' && $menuObj->url != '0' && $menuObj->url != '' ? '<a href="' . config('app.frontend_url') . $menuObj->url . '" target="_blank">View</a>' : '—';

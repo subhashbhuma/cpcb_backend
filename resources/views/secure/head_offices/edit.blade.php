@@ -38,10 +38,22 @@
                                 <input type="text" name="title_hi" class="form-control" value="{{ $headOffice->title_hi }}">
                             </div>
 
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="text" class="form-control" id="email" name="email"
                                     value="{{ old('email', $headOffice->email) }}">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="image" class="form-label">Profile Picture / Image</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                <small class="text-muted">Allowed types: jpg, jpeg, png, gif, webp. Max size: 2MB.</small>
+                                @if ($headOffice->image)
+                                    <div class="mt-2">
+                                        <img src="{{ asset('storage/' . config('file_paths.HEAD_OFFICE_IMAGE_PATH') . '/' . $headOffice->image) }}"
+                                            alt="Profile Picture" class="img-thumbnail" style="max-height: 80px;">
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="col-md-6 mb-3">
@@ -67,6 +79,8 @@
                                 <textarea class="form-control" id="hi-page-editor"
                                     name="description_hi">{{ old('description_hi', $headOffice->description_hi) }}</textarea>
                             </div>
+
+                            <x-office-items-form :personnels="$headOffice->personnels" :profileActivities="$headOffice->profileActivities" />
                         </div>
 
                         <div class="mt-3 text-center">
@@ -80,7 +94,9 @@
 @endsection
 
 @section('pages-scripts')
+    <x-office-items-scripts />
     <script @cspNonce>
+
         $(document).ready(function () {
             // Validation
             $('#editForm').validate({

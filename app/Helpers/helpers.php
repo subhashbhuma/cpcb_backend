@@ -244,7 +244,7 @@ if (!function_exists('translateToHindi')) {
         try {
             $translator = app(\App\Services\TranslatorService::class);
             $translated = $translator->translate($text);
-            
+
             return !empty($translated) ? $translated : $text;
         } catch (\Exception $e) {
             Log::error('Translation Exception', [
@@ -266,7 +266,7 @@ if (!function_exists('translateToEnglish')) {
         try {
             $translator = app(\App\Services\TranslatorService::class);
             $translated = $translator->translate($text, 'eng');
-            
+
             return !empty($translated) ? $translated : $text;
         } catch (\Exception $e) {
             Log::error('Translation Exception', [
@@ -350,3 +350,38 @@ function getLastUpdatedOn()
     }
 }
 
+function statusBadge($isApproved, $isPublished): string
+{
+    // Approval rejected
+    if ((int) $isApproved === 2) {
+        return '<span class="badge bg-danger">
+                    <i class="pi pi-times-circle"></i> Approval Rejected
+                </span>';
+    }
+
+    // Pending approval
+    if ((int) $isApproved === 0) {
+        return '<span class="badge bg-warning">
+                    <i class="pi pi-clock"></i> Pending Approval
+                </span>';
+    }
+
+    // Published
+    if ((int) $isPublished === 1) {
+        return '<span class="badge bg-success">
+                    <i class="pi pi-check-circle"></i> Published
+                </span>';
+    }
+
+    // Unpublished
+    if ((int) $isPublished === 2) {
+        return '<span class="badge bg-secondary">
+                    <i class="pi pi-eye-slash"></i> Unpublished
+                </span>';
+    }
+
+    // Approved but not yet published
+    return '<span class="badge bg-info">
+                <i class="pi pi-send"></i> Approved — Pending Publication
+            </span>';
+}

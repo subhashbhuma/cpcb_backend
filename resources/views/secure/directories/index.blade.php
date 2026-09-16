@@ -57,6 +57,7 @@
                 columns: [
                     {
                         data: 'section_serial',
+                        searchable: false,
                         width: '8%',
                         render: function (data) {
                             return data;

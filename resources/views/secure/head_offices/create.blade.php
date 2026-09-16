@@ -35,9 +35,15 @@
                                 <input type="text" name="title_hi" class="form-control">
                             </div>
 
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="text" class="form-control" id="email" name="email" value="{{ old('email') }}">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="image" class="form-label">Profile Picture / Image</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                <small class="text-muted">Allowed types: jpg, jpeg, png, gif, webp. Max size: 2MB.</small>
                             </div>
 
                             <div class="col-md-6 mb-3">
@@ -62,6 +68,8 @@
                                 <textarea class="form-control" id="hi-page-editor"
                                     name="description_hi">{{ old('description_hi') }}</textarea>
                             </div>
+
+                            <x-office-items-form />
                         </div>
 
                         <div class="mt-3 text-center">
@@ -75,7 +83,9 @@
 @endsection
 
 @section('pages-scripts')
+    <x-office-items-scripts />
     <script @cspNonce type="text/javascript">
+
         $(document).ready(function () {
             // Validation
             $('#createForm').validate({

@@ -202,8 +202,15 @@ class FixAllPermissionsAndMenusSeeder extends Seeder
 
         // Standardize any existing permissions groups
         foreach ($permissionGroups as $kw => $g) {
-            Permission::where('name', 'like', "%{$kw}%")
-                ->update(['group' => $g]);
+            Permission::whereRaw('LOWER(name) = ? OR LOWER(name) IN (?, ?, ?, ?, ?, ?)', [
+                strtolower($kw),
+                'view ' . strtolower($kw),
+                'add ' . strtolower($kw),
+                'edit ' . strtolower($kw),
+                'delete ' . strtolower($kw),
+                'publish ' . strtolower($kw),
+                'approve ' . strtolower($kw),
+            ])->update(['group' => $g]);
         }
 
         // Also ensure standard permissions for each group exist

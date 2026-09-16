@@ -5,7 +5,13 @@
         $user = auth()->user();
     @endphp
 
+    @if(Auth::user()->roles->first()->name == 'EMPLOYEE')
+    @include('secure.dashboard.roles.employee')
+    @else
     @include('secure.dashboard.roles.super_admin')
+    @endif
+
+   
 @endsection
 
 @section('pages-scripts')

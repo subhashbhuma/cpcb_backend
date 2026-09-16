@@ -23,6 +23,7 @@ class RegionalDirectorate extends Model
         'designation',
         'designation_hi',
         'email',
+        'image',
         'description',
         'description_hi',
         'is_approved',
@@ -101,4 +102,43 @@ class RegionalDirectorate extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function personnels()
+    {
+        return $this->hasMany(OfficePersonnel::class, 'office_id')
+            ->where('office_type', 'regional_directorates')
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc');
+    }
+
+    public function active_personnels()
+    {
+        return $this->personnels()->where('record_status', 1);
+    }
+
+    public function profileActivities()
+    {
+        return $this->hasMany(OfficeProfileActivity::class, 'office_id')
+            ->where('office_type', 'regional_directorates')
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc');
+    }
+
+    public function active_profile_activities()
+    {
+        return $this->profileActivities()->where('record_status', 1);
+    }
+
+    public function states()
+    {
+        return $this->hasMany(RegionalDirectorateState::class, 'regional_directorate_id')
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc');
+    }
+
+    public function active_states()
+    {
+        return $this->states()->where('record_status', 1);
+    }
 }
+

@@ -24,7 +24,7 @@ class StoreSocialMediaRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'type' => 'required|string|in:1,2,3,4,5,6',
+            'type' => 'required|string',
             'name' => 'required|string|max:255|regex:/^[\p{L}\p{N}\p{M}\s\.\,\-_&\(\)\:\;\'’"\/@#\$%?!\+=\[\]\*।॥–—]*$/u',
             'url' => 'required|url|max:255',
             'embed_code' => 'required|string',

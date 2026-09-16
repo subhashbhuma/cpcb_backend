@@ -683,8 +683,9 @@
             let source = button.data('source');
             let target = button.data('target');
 
-            // Find closest container to scope search and avoid duplicate target/source issues
-            let container = button.closest('form, .modal, .modal-body, fieldset, .card-body, .card');
+            // Find closest container/row to scope search
+            let row = button.closest('tr, .row-item, .personnel-row, .activity-row');
+            let container = row.length ? row : button.closest('form, .modal, .modal-body, fieldset, .card-body, .card');
             
             // Detect if inputs inside this container have a numeric suffix (e.g., _1, _2) from dynamic rows
             let indexSuffix = '';
@@ -702,18 +703,14 @@
             let sourceName = source + indexSuffix;
             let targetName = target + indexSuffix;
 
-            let englishInput = container.length ? container.find(`input[name="${sourceName}"], textarea[name="${sourceName}"], select[name="${sourceName}"]`) : $();
-
-            if (englishInput.length === 0) {
-                englishInput = $(`input[name="${sourceName}"], textarea[name="${sourceName}"], select[name="${sourceName}"]`);
+            // Search for English input in closest container/row
+            let englishInput = $();
+            if (container.length) {
+                englishInput = container.find(`input[name$="[${source}]"], textarea[name$="[${source}]"], input[name="${sourceName}"], textarea[name="${sourceName}"], input[name="${source}"], textarea[name="${source}"], .item-${source}-en`);
             }
 
-            // Fallback to non-suffixed name if the suffixed one wasn't found (just in case)
-            if (englishInput.length === 0 && indexSuffix !== '') {
-                englishInput = container.length ? container.find(`input[name="${source}"], textarea[name="${source}"], select[name="${source}"]`) : $();
-                if (englishInput.length === 0) {
-                    englishInput = $(`input[name="${source}"], textarea[name="${source}"], select[name="${source}"]`);
-                }
+            if (englishInput.length === 0) {
+                englishInput = $(`input[name$="[${source}]"], textarea[name$="[${source}]"], input[name="${sourceName}"], textarea[name="${sourceName}"], input[name="${source}"], textarea[name="${source}"], .item-${source}-en`);
             }
 
             let englishText = englishInput.first().val();
@@ -734,17 +731,12 @@
                 },
                 success: function (res) {
                     if (res.success) {
-                        let targetInput = container.length ? container.find(`input[name="${targetName}"], textarea[name="${targetName}"], select[name="${targetName}"]`) : $();
-                        if (targetInput.length === 0) {
-                            targetInput = $(`input[name="${targetName}"], textarea[name="${targetName}"], select[name="${targetName}"]`);
+                        let targetInput = $();
+                        if (container.length) {
+                            targetInput = container.find(`input[name$="[${target}]"], textarea[name$="[${target}]"], input[name="${targetName}"], textarea[name="${targetName}"], input[name="${target}"], textarea[name="${target}"], .item-${target}-hi`);
                         }
-
-                        // Fallback to non-suffixed name if not found
-                        if (targetInput.length === 0 && indexSuffix !== '') {
-                            targetInput = container.length ? container.find(`input[name="${target}"], textarea[name="${target}"], select[name="${target}"]`) : $();
-                            if (targetInput.length === 0) {
-                                targetInput = $(`input[name="${target}"], textarea[name="${target}"], select[name="${target}"]`);
-                            }
+                        if (targetInput.length === 0) {
+                            targetInput = $(`input[name$="[${target}]"], textarea[name$="[${target}]"], input[name="${targetName}"], textarea[name="${targetName}"], input[name="${target}"], textarea[name="${target}"], .item-${target}-hi`);
                         }
 
                         targetInput.val(res.translation);
@@ -762,6 +754,7 @@
                 }
             });
         });
+
     </script>
 
 

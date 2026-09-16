@@ -111,22 +111,23 @@ class CMSFileController extends Controller
      */
     public function resolveOldSiteFile(Request $request)
     {
-        $encoded = $request->query('id');
+        $encoded = $request->query('id') ?: $request->query('name') ?: $request->query('file') ?: $request->query('path');
 
         if (!$encoded) {
-            return response()->json(['status' => false, 'error' => 'Missing id parameter'], 400);
+            return response()->json(['status' => false, 'error' => 'Missing id or file parameter'], 400);
         }
 
         // Handle Base64 "+" issue (browsers convert "+" to space)
-        $encoded = str_replace(' ', '+', $encoded);
+        $cleanEncoded = str_replace(' ', '+', $encoded);
 
-        $decoded = base64_decode($encoded, true);
-        if ($decoded === false) {
-            return response()->json(['status' => false, 'error' => 'Invalid encoding'], 400);
+        $decoded = base64_decode($cleanEncoded, true);
+        if ($decoded === false || !mb_check_encoding($decoded, 'UTF-8') || preg_match('/[^\x20-\x7E\t\r\n]/', $decoded)) {
+            // Fallback: If not valid base64 or contains non-printable binary chars, treat as raw path/filename
+            $decoded = $encoded;
         }
 
-        // Extract just the filename from the decoded path (e.g. "TenderFiles/938_xxx.pdf" -> "938_xxx.pdf")
-        $fileName = basename($decoded);
+        // Extract just the filename from the decoded path (e.g. "employee/ama/Revised_MoU_2026-27.pdf" -> "Revised_MoU_2026-27.pdf")
+        $fileName = basename(urldecode($decoded));
 
         if (empty($fileName)) {
             return response()->json(['status' => false, 'error' => 'Invalid file path'], 400);
@@ -156,12 +157,13 @@ class CMSFileController extends Controller
         ];
 
         $storageRoot = public_path('storage');
+        $lowerFileName = strtolower($fileName);
 
+        // 1. Instant check across common searchPaths
         foreach ($searchPaths as $dir) {
             $fullPath = $storageRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $dir) . DIRECTORY_SEPARATOR . $fileName;
 
             if (file_exists($fullPath)) {
-                // Build the relative path as "storage/<dir>/<filename>" and base64 encode it
                 $relativePath = 'storage/' . $dir . '/' . $fileName;
                 $code = base64_encode($relativePath);
 
@@ -174,10 +176,52 @@ class CMSFileController extends Controller
             }
         }
 
+        // 2. Instant O(1) lookup via Cached Index across all 12,000+ files
+        $index = $this->getStorageFileIndex();
+        if (isset($index[$lowerFileName])) {
+            $relSubPath = $index[$lowerFileName];
+            $fullPath = $storageRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relSubPath);
+            if (file_exists($fullPath)) {
+                $relativePath = 'storage/' . $relSubPath;
+                $code = base64_encode($relativePath);
+
+                return response()->json([
+                    'status' => true,
+                    'code'   => $code,
+                    'name'   => $fileName,
+                    'path'   => dirname($relSubPath),
+                ]);
+            }
+        }
+
         return response()->json([
             'status' => false,
             'error'  => 'File not found',
         ], 404);
+    }
+
+    /**
+     * Get or build a cached in-memory index of all files in public/storage for instantaneous lookup.
+     */
+    private function getStorageFileIndex()
+    {
+        return \Illuminate\Support\Facades\Cache::remember('storage_file_index', 3600, function () {
+            $map = [];
+            $storageRoot = public_path('storage');
+            if (is_dir($storageRoot)) {
+                $rdi = new \RecursiveDirectoryIterator($storageRoot, \RecursiveDirectoryIterator::SKIP_DOTS);
+                $rii = new \RecursiveIteratorIterator($rdi, \RecursiveIteratorIterator::SELF_FIRST);
+
+                foreach ($rii as $file) {
+                    if ($file->isFile()) {
+                        $fn = strtolower($file->getFilename());
+                        $rel = ltrim(str_replace(['\\', '/'], '/', substr($file->getPathname(), strlen($storageRoot))), '/');
+                        $map[$fn] = $rel;
+                    }
+                }
+            }
+            return $map;
+        });
     }
 
     public function getFileDetail(Request $request){

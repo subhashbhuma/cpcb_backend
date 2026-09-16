@@ -104,10 +104,15 @@ class HeadOfficeController extends Controller
                 null,
                 null,
                 auth()->user()->id,
-                auth()->user()->id
+                auth()->user()->id,
+                $request->file('image')
             );
 
-            $this->headOfficeService->create($dto);
+            $this->headOfficeService->create(
+                $dto,
+                $request->input('personnels', []),
+                $request->input('profile_activities', [])
+            );
 
             return response()->json([
                 'success' => true,
@@ -165,10 +170,16 @@ class HeadOfficeController extends Controller
                 null,
                 null,
                 $headOffice->created_by,
-                auth()->user()->id
+                auth()->user()->id,
+                $request->file('image')
             );
 
-            $this->headOfficeService->update($dto, $id);
+            $this->headOfficeService->update(
+                $dto,
+                $id,
+                $request->input('personnels', []),
+                $request->input('profile_activities', [])
+            );
 
             return response()->json([
                 'success' => true,

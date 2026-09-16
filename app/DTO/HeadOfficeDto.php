@@ -8,6 +8,7 @@ class HeadOfficeDto
     public $title;
     public $title_hi;
     public $email;
+    public $image;
     public $ext_number;
     public $description;
     public $description_hi;
@@ -33,12 +34,14 @@ class HeadOfficeDto
         $remarks,
         $publish_remark,
         $created_by,
-        $updated_by
+        $updated_by,
+        $image = null
     ) {
         $this->division_id = $division_id;
         $this->title = $title;
         $this->title_hi = $title_hi;
         $this->email = $email;
+        $this->image = $image;
         $this->ext_number = $ext_number;
         $this->description = $description;
         $this->description_hi = $description_hi;

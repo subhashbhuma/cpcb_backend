@@ -22,7 +22,8 @@ class RegionalDirectorateDto
         public ?string $publish_remark,
         public ?int $created_by,
         public ?int $updated_by = null,
-        public ?int $order = 0
+        public ?int $order = 0,
+        public $image = null
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -43,7 +44,8 @@ class RegionalDirectorateDto
             $request->input('publish_remark'),
             auth()->id(),
             $request->isMethod('put') || $request->isMethod('patch') ? auth()->id() : null,
-            $request->input('order', 0)
+            $request->input('order', 0),
+            $request->file('image')
         );
     }
 
@@ -57,6 +59,7 @@ class RegionalDirectorateDto
             'designation' => $this->designation,
             'designation_hi' => $this->designation_hi,
             'email' => $this->email,
+            'image' => is_string($this->image) ? $this->image : null,
             'description' => $this->description,
             'description_hi' => $this->description_hi,
             'is_approved' => $this->is_approved,

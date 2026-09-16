@@ -52,6 +52,12 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
+                                <label for="image" class="form-label">Profile Picture / Image</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                <small class="text-muted">Allowed types: jpg, jpeg, png, gif, webp. Max size: 2MB.</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
                                 <label for="order" class="form-label">Order <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="order" name="order"
                                     value="{{ old('order', 0) }}" min="0" required>
@@ -65,6 +71,8 @@
                                 <label for="description_hi" class="form-label">Description (Hindi) <x-translate-button source="description" target="description_hi" isRichText="true" /></label>
                                 <textarea class="form-control" id="hi-page-editor" name="description_hi">{{ old('description_hi') }}</textarea>
                             </div>
+
+                            <x-office-items-form :states="collect()" />
                         </div>
 
                         <div class="col-12 text-center">
@@ -78,7 +86,9 @@
 @endsection
 
 @section('pages-scripts')
+    <x-office-items-scripts />
     <script @cspNonce type="text/javascript">
+
         $(document).ready(function() {
             // Validation
             $('#createForm').validate({

@@ -106,7 +106,7 @@ class UserController extends Controller
     public function create()
     {
         $pageTitle = 'Add Users';
-        $currentRole = Auth::user()->roles->first()->name;
+        $currentRole = Auth::user()?->roles?->first()?->name ?? 'SUPERADMIN';
 
         $roles = Role::where(function ($query) use ($currentRole) {
             if ($currentRole == 'SUPERADMIN') {
@@ -118,75 +118,8 @@ class UserController extends Controller
             $query->where('name', '!=', 'EMPLOYEE');
         })->get();
 
-        // Fetch all menus in one query to reduce DB roundtrips
-        $allMenus = Menu::with(['children.pages', 'children.children.pages', 'pages'])->get();
-
-        // 1. Sidebar Menus - Filter from already fetched collection
-        $sidebarRootMenus = $allMenus->where('location', 'sidebar')
-            ->where('parent_id', null)
-            ->sortBy('order');
-
-        $sidebarGroups = [];
-        $sNo = 1;
-        foreach ($sidebarRootMenus as $root) {
-            $flattened = [];
-            $this->flattenMenusForMatrix($root, (string) $sNo, 0, $flattened);
-            $sidebarGroups[] = [
-                'root' => $root,
-                'menus' => $flattened
-            ];
-            $sNo++;
-        }
-
-        // 2. Page Menus - Filter from already fetched collection
-        // Only show menus that have pages created (self or any descendant)
-        $pageRootMenus = $allMenus->where('location', '!=', 'sidebar')
-            ->where('parent_id', null)
-            ->filter(fn($menu) => $this->menuHasPages($menu))
-            ->sortBy(function ($menu) {
-                return ($menu->location == 'header' ? '0' : '1') . $menu->location . str_pad($menu->order, 5, '0', STR_PAD_LEFT);
-            });
-
-        $pageGroups = [];
-        $pNo = 1;
-        // Extract all sidebar permission groups to exclude from Page Menus
-        $sidebarMenusList = collect($sidebarGroups)->pluck('menus')->flatten();
-        $sidebarPermissionGroups = $sidebarMenusList->pluck('permission_group')
-            ->filter()
-            ->map(fn($g) => strtolower(trim($g)))
-            ->unique()
-            ->toArray();
-
-        foreach ($pageRootMenus as $root) {
-            $flattened = [];
-            $this->flattenMenusForMatrix($root, (string) $pNo, 0, $flattened, $sidebarPermissionGroups);
-            if (!empty($flattened)) {
-                $pageGroups[] = [
-                    'root' => $root,
-                    'menus' => $flattened
-                ];
-                $pNo++;
-            }
-        }
-
-        // Get only the permissions relevant to the menus being displayed
-        $allDisplayedMenus = collect($sidebarGroups)->pluck('menus')->flatten()
-            ->merge(collect($pageGroups)->pluck('menus')->flatten());
-
-        $relevantGroups = $allDisplayedMenus->pluck('permission_group')
-            ->unique()
-            ->filter()
-            ->map(fn($g) => strtolower(trim($g)))
-            ->toArray();
-
-        $permissionGroups = \Illuminate\Support\Facades\DB::table('permissions')
-            ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER("group")'), $relevantGroups)
-            ->get()
-            ->groupBy(function($item) {
-                return strtolower(trim($item->group));
-            });
-
-        $divisions = Division::where('is_new',1)->get(['id','title']);
+        [$sidebarGroups, $pageGroups, $permissionGroups] = $this->getMenuMatrixData();
+        $divisions = Division::where('is_new', 1)->get(['id', 'title']);
 
         return view('secure.users.create', compact(
             'pageTitle',
@@ -198,7 +131,7 @@ class UserController extends Controller
         ));
     }
 
-    protected function flattenMenusForMatrix($menu, $prefix, $depth, &$result, $excludeGroups = [])
+    protected function flattenMenusForMatrix($menu, $prefix, $depth, &$result, $excludeGroups = [], &$seenGroups = [])
     {
         // Skip if this menu's permission group is in the exclude list (singular/plural aware)
         if ($menu->permission_group && $this->isExcludedGroup($menu->permission_group, $excludeGroups)) {
@@ -207,9 +140,6 @@ class UserController extends Controller
 
         // Deduplicate menus that share the exact same permission group,
         // so they don't appear multiple times in the matrix and cause cascading selections.
-        static $seenGroups = [];
-        // When depth is 0, we might be starting a new root tree, but we want deduplication
-        // to span the whole request. We can track it globally per request.
         if ($menu->permission_group) {
             $key = strtolower(trim($menu->permission_group));
             if (isset($seenGroups[$key])) {
@@ -226,7 +156,7 @@ class UserController extends Controller
         if ($menu->children && $menu->children->isNotEmpty()) {
             $childIndex = 1;
             foreach ($menu->children as $child) {
-                $this->flattenMenusForMatrix($child, $prefix . '.' . $childIndex, $depth + 1, $result, $excludeGroups);
+                $this->flattenMenusForMatrix($child, $prefix . '.' . $childIndex, $depth + 1, $result, $excludeGroups, $seenGroups);
                 $childIndex++;
             }
         }
@@ -349,7 +279,11 @@ class UserController extends Controller
     public function edit(string $id)
     {
         $user = $this->userService->findById($id);
-        $currentRole = Auth::user()->roles->first()->name;
+        if (!$user) {
+            abort(404, 'User not found.');
+        }
+
+        $currentRole = Auth::user()?->roles?->first()?->name ?? 'SUPERADMIN';
 
         $roles = Role::where(function ($query) use ($currentRole) {
             if ($currentRole == 'SUPERADMIN') {
@@ -360,77 +294,14 @@ class UserController extends Controller
             }
             $query->where('name', '!=', 'EMPLOYEE');
         })->get();
-        $userRoles = $user->roles->pluck('name')->toArray();
 
-        $userPermissions = $user->getDirectPermissions()->pluck('name')->toArray();
+        $userRoles = $user->roles ? $user->roles->pluck('name')->toArray() : [];
+        $userPermissions = method_exists($user, 'getDirectPermissions')
+            ? $user->getDirectPermissions()->pluck('name')->toArray()
+            : [];
 
-        // Fetch all menus in one query
-        $allMenus = Menu::with(['children.pages', 'children.children.pages', 'pages'])->get();
-
-        // 1. Sidebar Menus
-        $sidebarRootMenus = $allMenus->where('location', 'sidebar')
-            ->where('parent_id', null)
-            ->sortBy('order');
-
-        $sidebarGroups = [];
-        $sNo = 1;
-        foreach ($sidebarRootMenus as $root) {
-            $flattened = [];
-            $this->flattenMenusForMatrix($root, (string) $sNo, 0, $flattened);
-            $sidebarGroups[] = [
-                'root' => $root,
-                'menus' => $flattened
-            ];
-            $sNo++;
-        }
-
-        // 2. Page Menus - Only show menus that have pages created (self or any descendant)
-        $pageRootMenus = $allMenus->where('location', '!=', 'sidebar')
-            ->where('parent_id', null)
-            ->filter(fn($menu) => $this->menuHasPages($menu))
-            ->sortBy(function ($menu) {
-                return ($menu->location == 'header' ? '0' : '1') . $menu->location . str_pad($menu->order, 5, '0', STR_PAD_LEFT);
-            });
-
-        $pageGroups = [];
-        $pNo = 1;
-        // Extract all sidebar permission groups to exclude from Page Menus
-        $sidebarMenusList = collect($sidebarGroups)->pluck('menus')->flatten();
-        $sidebarPermissionGroups = $sidebarMenusList->pluck('permission_group')
-            ->filter()
-            ->map(fn($g) => strtolower(trim($g)))
-            ->unique()
-            ->toArray();
-
-        foreach ($pageRootMenus as $root) {
-            $flattened = [];
-            $this->flattenMenusForMatrix($root, (string) $pNo, 0, $flattened, $sidebarPermissionGroups);
-            if (!empty($flattened)) {
-                $pageGroups[] = [
-                    'root' => $root,
-                    'menus' => $flattened
-                ];
-                $pNo++;
-            }
-        }
-
-        // Get only the permissions relevant to the menus being displayed
-        $allDisplayedMenus = collect($sidebarGroups)->pluck('menus')->flatten()
-            ->merge(collect($pageGroups)->pluck('menus')->flatten());
-
-        $relevantGroups = $allDisplayedMenus->pluck('permission_group')
-            ->unique()
-            ->filter()
-            ->map(fn($g) => strtolower(trim($g)))
-            ->toArray();
-
-        $permissionGroups = \Illuminate\Support\Facades\DB::table('permissions')
-            ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER("group")'), $relevantGroups)
-            ->get()
-            ->groupBy(function($item) {
-                return strtolower(trim($item->group));
-            });
-        $divisions = Division::where('is_new',1)->get(['id','title']);
+        [$sidebarGroups, $pageGroups, $permissionGroups] = $this->getMenuMatrixData();
+        $divisions = Division::where('is_new', 1)->get(['id', 'title']);
 
         return view('secure.users.edit', compact(
             'user',
@@ -576,5 +447,131 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Build sidebar and page menu groups along with their permission groups for the permission matrix.
+     */
+    protected function getMenuMatrixData(): array
+    {
+        // Fetch all menus in one query to reduce DB roundtrips
+        $allMenus = Menu::with(['children.pages', 'children.children.pages', 'pages'])->get();
+
+        // 1. Sidebar Menus
+        $sidebarRootMenus = $allMenus->where('location', 'sidebar')
+            ->where('parent_id', null)
+            ->sortBy('order');
+
+        $sidebarGroups = [];
+        $sNo = 1;
+        $seenSidebarGroups = [];
+        foreach ($sidebarRootMenus as $root) {
+            $flattened = [];
+            $this->flattenMenusForMatrix($root, (string) $sNo, 0, $flattened, [], $seenSidebarGroups);
+            $sidebarGroups[] = [
+                'root' => $root,
+                'menus' => $flattened
+            ];
+            $sNo++;
+        }
+
+        // 2. Page Menus - Only show menus that have pages created (self or any descendant)
+        $pageRootMenus = $allMenus->where('location', '!=', 'sidebar')
+            ->where('parent_id', null)
+            ->filter(fn($menu) => $this->menuHasPages($menu))
+            ->sortBy(function ($menu) {
+                return ($menu->location == 'header' ? '0' : '1') . $menu->location . str_pad($menu->order, 5, '0', STR_PAD_LEFT);
+            });
+
+        $pageGroups = [];
+        $pNo = 1;
+        // Extract all sidebar permission groups to exclude from Page Menus
+        $sidebarMenusList = collect($sidebarGroups)->pluck('menus')->flatten();
+        $sidebarPermissionGroups = $sidebarMenusList->pluck('permission_group')
+            ->filter()
+            ->map(fn($g) => strtolower(trim($g)))
+            ->unique()
+            ->toArray();
+
+        $seenPageGroups = [];
+        foreach ($pageRootMenus as $root) {
+            $flattened = [];
+            $this->flattenMenusForMatrix($root, (string) $pNo, 0, $flattened, $sidebarPermissionGroups, $seenPageGroups);
+            if (!empty($flattened)) {
+                $pageGroups[] = [
+                    'root' => $root,
+                    'menus' => $flattened
+                ];
+                $pNo++;
+            }
+        }
+
+        // Get permissions grouped for all displayed menus
+        $permissionGroups = $this->getPermissionGroupsForMenus($sidebarGroups, $pageGroups);
+
+        return [$sidebarGroups, $pageGroups, $permissionGroups];
+    }
+
+    /**
+     * Resiliently fetch and group permissions for displayed menus.
+     * Ensures all 6 CRUD/workflow permissions exist and have proper grouping.
+     */
+    protected function getPermissionGroupsForMenus($sidebarGroups, $pageGroups)
+    {
+        $allDisplayedMenus = collect($sidebarGroups)->pluck('menus')->flatten()
+            ->merge(collect($pageGroups)->pluck('menus')->flatten());
+
+        $actions = ['view', 'add', 'edit', 'delete', 'publish', 'approve'];
+
+        // Get all relevant permission groups
+        $relevantGroups = $allDisplayedMenus->pluck('permission_group')
+            ->unique()
+            ->filter()
+            ->values();
+
+        // 1 single query to fetch all permissions
+        $existingPermissions = Permission::whereIn('guard_name', ['web', 'api'])
+            ->get()
+            ->keyBy(fn($p) => strtolower(trim($p->name)));
+
+        $toInsert = [];
+        $now = now();
+
+        foreach ($allDisplayedMenus as $menu) {
+            if ($menu->is_caption) {
+                continue;
+            }
+            $group = $menu->permission_group ?: $menu->title;
+            if (empty($group)) {
+                continue;
+            }
+
+            foreach ($actions as $action) {
+                $permName = strtolower($action . ' ' . $group);
+                if (!$existingPermissions->has($permName)) {
+                    $toInsert[] = [
+                        'name' => $permName,
+                        'guard_name' => 'web',
+                        'group' => $group,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+            }
+        }
+
+        if (!empty($toInsert)) {
+            // Bulk insert missing permissions in 1 query
+            Permission::insertOrIgnore($toInsert);
+            $existingPermissions = Permission::whereIn('guard_name', ['web', 'api'])
+                ->get()
+                ->keyBy(fn($p) => strtolower(trim($p->name)));
+        }
+
+        $relevantGroupsLower = $relevantGroups->map(fn($g) => strtolower(trim($g)))->toArray();
+
+        return $existingPermissions
+            ->filter(fn($p) => in_array(strtolower(trim($p->group ?? '')), $relevantGroupsLower))
+            ->groupBy(fn($p) => strtolower(trim($p->group ?? '')));
     }
 }

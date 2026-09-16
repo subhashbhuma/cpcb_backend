@@ -11,7 +11,6 @@ use Illuminate\Support\Str;
 use App\Models\AgraAirQuality;
 use App\Models\Announcement;
 use App\Models\AnnualReport;
-use App\Models\Circular;
 use App\Models\CommentReport;
 use App\Models\Direction;
 use App\Models\Directory;
@@ -50,10 +49,9 @@ class SearchController extends Controller
         'agra_air_quality'   => [AgraAirQuality::class,  '/agra-air-quality',  'Agra Air Quality'],
         'announcement'       => [Announcement::class,    '/announcements',     'Announcement'],
         'annual_report'      => [AnnualReport::class,    '/annual-reports',    'Annual Report'],
-        'circular'           => [Circular::class,        '/circulars',         'Circular'],
         'comment_report'     => [CommentReport::class,   '/comment-reports',   'Comment Report'],
         'direction'          => [Direction::class,       '/directions',        'Direction'],
-        'directory'          => [Directory::class,       '/contact-directory', 'Directory'],
+        'directory'          => [Directory::class,       '/contact/directory', 'Directory'],
         'division'           => [Division::class,        '/divisions',         'Division'],
         'event'              => [Event::class,           '/events',            'Event'],
         'faq'                => [Faq::class,             '/faqs',              'FAQ'],
@@ -379,7 +377,6 @@ class SearchController extends Controller
         $refCol = match ($type) {
             'tender'       => $this->cachedHasColumn($tableName, 'tender_reference_no') ? 'tender_reference_no' : null,
             'direction'    => $this->cachedHasColumn($tableName, 'direction_number')    ? 'direction_number'    : null,
-            'circular'     => $this->cachedHasColumn($tableName, 'circular_number')     ? 'circular_number'     : null,
             default        => null,
         };
 
@@ -406,6 +403,15 @@ class SearchController extends Controller
             if ($this->cachedHasColumn($tableName, 'file_name_hi')) $selectCols[] = 'file_name_hi';
         }
 
+        // Directory needs specific columns for rich officer details
+        if ($type === 'directory') {
+            $selectCols = array_merge($selectCols, [
+                'name', 'name_hi', 'designation', 'designation_hi',
+                'division_id', 'office_ph_no', 'mobile_no', 'email',
+                'ext_number', 'assigned_work', 'assigned_work_hi', 'image', 'updated_at'
+            ]);
+        }
+
         // Build base query
         $dbQuery = $modelClass::select(array_unique($selectCols));
 
@@ -417,14 +423,16 @@ class SearchController extends Controller
             $dbQuery->where('is_approved', 1);
         }
 
-        // Eager-load menu for pages
+        // Eager-load relations
         if ($type === 'page') {
             $dbQuery->with(['menu:id,url']);
+        } elseif ($type === 'directory') {
+            $dbQuery->with(['division:id,title,title_hi']);
         }
 
         // Build WHERE search conditions
         $dbQuery->where(function ($q) use (
-            $searchTerm, $tableName,
+            $searchTerm, $tableName, $type,
             $titleCol, $hasTitleCol, $titleHiCol, $hasTitleHiCol,
             $descCol, $hasDescCol, $descHiCol, $hasDescHiCol,
             $hasBriefSummary, $hasBriefSummaryHi,
@@ -446,6 +454,19 @@ class SearchController extends Controller
             if ($hasContent)    $q->orWhereRaw('LOWER(content) LIKE ?', [$searchTerm]);
             if ($hasContentHi)  $q->orWhereRaw('LOWER(content_hi) LIKE ?', [$searchTerm]);
             if ($refCol)        $q->orWhereRaw("LOWER({$refCol}) LIKE ?", [$searchTerm]);
+
+            if ($type === 'directory') {
+                $q->orWhereRaw('LOWER(designation) LIKE ?', [$searchTerm]);
+                $q->orWhereRaw('LOWER(designation_hi) LIKE ?', [$searchTerm]);
+                $q->orWhereRaw('LOWER(email) LIKE ?', [$searchTerm]);
+                $q->orWhereRaw('LOWER(mobile_no) LIKE ?', [$searchTerm]);
+                $q->orWhereRaw('LOWER(office_ph_no) LIKE ?', [$searchTerm]);
+                $q->orWhereRaw('LOWER(ext_number) LIKE ?', [$searchTerm]);
+                $q->orWhereHas('division', function ($dq) use ($searchTerm) {
+                    $dq->whereRaw('LOWER(title) LIKE ?', [$searchTerm])
+                       ->orWhereRaw('LOWER(title_hi) LIKE ?', [$searchTerm]);
+                });
+            }
         });
 
         return $dbQuery->get()->map(function ($item) use (
@@ -473,7 +494,7 @@ class SearchController extends Controller
                 $descriptionHi = Str::limit(strip_tags($item->{$descHiCol} ?? ''), 200);
             }
 
-            return [
+            $baseResult = [
                 'type'            => $type,
                 'type_label'      => $label,
                 'id'              => $item->id,
@@ -487,6 +508,24 @@ class SearchController extends Controller
                 'url'             => $url,
                 'relevance_score' => $this->calculateRelevance($item, $query, $titleCol, $descCol),
             ];
+
+            if ($type === 'directory') {
+                $baseResult['name'] = $item->name;
+                $baseResult['name_hi'] = $item->name_hi ?? $item->name;
+                $baseResult['designation'] = $item->designation;
+                $baseResult['designation_hi'] = $item->designation_hi ?? $item->designation;
+                $baseResult['division'] = $item->division ? $item->division->title : null;
+                $baseResult['division_hi'] = $item->division ? ($item->division->title_hi ?? $item->division->title) : null;
+                $baseResult['email'] = $item->email;
+                $baseResult['mobile_no'] = $item->mobile_no;
+                $baseResult['office_ph_no'] = $item->office_ph_no;
+                $baseResult['ext_number'] = $item->ext_number;
+                $baseResult['image_url'] = $item->image_url;
+                $baseResult['assigned_work'] = $item->assigned_work;
+                $baseResult['assigned_work_hi'] = $item->assigned_work_hi ?? $item->assigned_work;
+            }
+
+            return $baseResult;
         });
     }
 
@@ -536,7 +575,7 @@ class SearchController extends Controller
         }
 
         // Reference number match
-        foreach (['tender_reference_no', 'direction_number', 'circular_number'] as $field) {
+        foreach (['tender_reference_no', 'direction_number'] as $field) {
             if (isset($item->{$field}) && stripos($item->{$field}, $query) !== false) {
                 $score += 3.0;
             }
