@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Config;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
@@ -38,6 +39,13 @@ class HeadOffice extends Model
     {
         return $this->is_published ? 'Published' : 'Draft';
     }
+
+
+    public function getFinalImageUrlAttribute()
+    {
+         return $this->image ? base64_encode(Config::get('file_paths')['HEAD_OFFICE_IMAGE_PATH'] . '/' . $this->image) : null;
+    }
+
 
     public function division()
     {

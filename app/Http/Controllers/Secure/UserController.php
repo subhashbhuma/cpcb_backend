@@ -131,8 +131,13 @@ class UserController extends Controller
         ));
     }
 
-    protected function flattenMenusForMatrix($menu, $prefix, $depth, &$result, $excludeGroups = [], &$seenGroups = [])
+    protected function flattenMenusForMatrix($menu, $prefix, $depth, &$result, $excludeGroups = [], &$seenGroups = [], $visitedIds = [])
     {
+        if (!$menu || in_array($menu->id, $visitedIds) || $depth > 20) {
+            return;
+        }
+        $visitedIds[] = $menu->id;
+
         // Skip if this menu's permission group is in the exclude list (singular/plural aware)
         if ($menu->permission_group && $this->isExcludedGroup($menu->permission_group, $excludeGroups)) {
             return;
@@ -153,10 +158,11 @@ class UserController extends Controller
         $menu->depth = $depth;
         $result[] = $menu;
 
-        if ($menu->children && $menu->children->isNotEmpty()) {
+        $children = isset($menu->custom_children) ? $menu->custom_children : $menu->children;
+        if ($children && $children->isNotEmpty()) {
             $childIndex = 1;
-            foreach ($menu->children as $child) {
-                $this->flattenMenusForMatrix($child, $prefix . '.' . $childIndex, $depth + 1, $result, $excludeGroups, $seenGroups);
+            foreach ($children as $child) {
+                $this->flattenMenusForMatrix($child, $prefix . '.' . $childIndex, $depth + 1, $result, $excludeGroups, $seenGroups, $visitedIds);
                 $childIndex++;
             }
         }
@@ -198,15 +204,21 @@ class UserController extends Controller
     /**
      * Check if a menu or any of its descendants have pages created.
      */
-    protected function menuHasPages($menu): bool
+    protected function menuHasPages($menu, $visited = []): bool
     {
+        if (!$menu || in_array($menu->id, $visited)) {
+            return false;
+        }
+        $visited[] = $menu->id;
+
         if ($menu->pages && $menu->pages->isNotEmpty()) {
             return true;
         }
 
-        if ($menu->children && $menu->children->isNotEmpty()) {
-            foreach ($menu->children as $child) {
-                if ($this->menuHasPages($child)) {
+        $children = isset($menu->custom_children) ? $menu->custom_children : $menu->children;
+        if ($children && $children->isNotEmpty()) {
+            foreach ($children as $child) {
+                if ($this->menuHasPages($child, $visited)) {
                     return true;
                 }
             }
@@ -454,8 +466,24 @@ class UserController extends Controller
      */
     protected function getMenuMatrixData(): array
     {
-        // Fetch all menus in one query to reduce DB roundtrips
-        $allMenus = Menu::with(['children.pages', 'children.children.pages', 'pages'])->get();
+        // 1. Fetch all menus and pages without triggering the recursive 'children' relation
+        $allMenus = Menu::without('children')->with('pages')->get();
+
+        // 2. Build the tree manually to avoid Eloquent infinite recursion on circular DB data
+        $menusById = [];
+        foreach ($allMenus as $menu) {
+            $menu->custom_children = collect();
+            $menusById[$menu->id] = $menu;
+        }
+
+        foreach ($allMenus as $menu) {
+            if ($menu->parent_id && isset($menusById[$menu->parent_id])) {
+                // Ignore self-referencing circles
+                if ($menu->id !== $menu->parent_id) {
+                    $menusById[$menu->parent_id]->custom_children->push($menu);
+                }
+            }
+        }
 
         // 1. Sidebar Menus
         $sidebarRootMenus = $allMenus->where('location', 'sidebar')
@@ -524,7 +552,9 @@ class UserController extends Controller
         $actions = ['view', 'add', 'edit', 'delete', 'publish', 'approve'];
 
         // Get all relevant permission groups
-        $relevantGroups = $allDisplayedMenus->pluck('permission_group')
+        $relevantGroups = $allDisplayedMenus->map(function ($menu) {
+            return $menu->permission_group ?: $menu->title;
+        })
             ->unique()
             ->filter()
             ->values();
@@ -568,10 +598,32 @@ class UserController extends Controller
                 ->keyBy(fn($p) => strtolower(trim($p->name)));
         }
 
-        $relevantGroupsLower = $relevantGroups->map(fn($g) => strtolower(trim($g)))->toArray();
+        $permissionGroups = collect();
+        foreach ($allDisplayedMenus as $menu) {
+            if ($menu->is_caption) {
+                continue;
+            }
+            $group = strtolower(trim($menu->permission_group ?: $menu->title));
+            if (empty($group)) {
+                continue;
+            }
 
-        return $existingPermissions
-            ->filter(fn($p) => in_array(strtolower(trim($p->group ?? '')), $relevantGroupsLower))
-            ->groupBy(fn($p) => strtolower(trim($p->group ?? '')));
+            if (!$permissionGroups->has($group)) {
+                $permissionGroups->put($group, collect());
+            }
+
+            foreach ($actions as $action) {
+                $permName = strtolower($action . ' ' . $group);
+                if ($existingPermissions->has($permName)) {
+                    // Check if it's already in the collection to prevent duplicates if multiple menus share a group
+                    $alreadyAdded = $permissionGroups[$group]->contains('name', $existingPermissions[$permName]->name);
+                    if (!$alreadyAdded) {
+                        $permissionGroups[$group]->push($existingPermissions[$permName]);
+                    }
+                }
+            }
+        }
+
+        return $permissionGroups;
     }
 }

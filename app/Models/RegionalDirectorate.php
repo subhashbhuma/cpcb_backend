@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Config;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
@@ -41,6 +42,11 @@ class RegionalDirectorate extends Model
             ->logOnly(['*'])
             ->logOnlyDirty()
             ->useLogName('regional_directorate');
+    }
+
+    public function getFinalImageUrlAttribute()
+    {
+         return $this->image ? base64_encode(Config::get('file_paths')['REGIONAL_DIRECTORATE_IMAGE_PATH'] . '/' . $this->image) : null;
     }
 
     public function getIsApprovedDescAttribute()

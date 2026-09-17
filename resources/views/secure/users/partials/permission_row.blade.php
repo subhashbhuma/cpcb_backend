@@ -1,11 +1,14 @@
 @php 
-    $hasChildren = $menu->children && $menu->children->isNotEmpty();
+    $children = isset($menu->custom_children) ? $menu->custom_children : $menu->children;
+    $hasChildren = $children && $children->isNotEmpty();
     $isCaption = $menu->is_caption || ($menu->url === '#' && empty($menu->icon_png) && !$hasChildren);
 
+    $effectiveGroup = $menu->permission_group ?: $menu->title;
+
     $matchingKey = null;
-    if ($menu->permission_group) {
-        $matchingKey = $permissionGroups->keys()->first(function ($k) use ($menu) {
-            return strtolower($k) === strtolower($menu->permission_group);
+    if ($effectiveGroup) {
+        $matchingKey = $permissionGroups->keys()->first(function ($k) use ($effectiveGroup) {
+            return strtolower($k) === strtolower($effectiveGroup);
         });
     }
 
@@ -66,9 +69,9 @@
                         return strtolower($p->name) === $exactName;
                     });
                 }
-                // 2. Try exact match using permission_group (which Menu.php userCan checks by default)
-                if (!$perm && !empty($menu->permission_group)) {
-                    $groupName = strtolower($action . ' ' . $menu->permission_group);
+                // 2. Try exact match using effective group
+                if (!$perm && !empty($effectiveGroup)) {
+                    $groupName = strtolower($action . ' ' . $effectiveGroup);
                     $perm = $groupPerms->first(function ($p) use ($groupName) {
                         return strtolower($p->name) === $groupName;
                     });

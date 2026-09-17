@@ -29,7 +29,7 @@ class PublicDirectoryResource extends JsonResource
             'ext_number' => $this->cleanText($this->ext_number),
             'assigned_work' => $this->cleanText($this->assigned_work),
             'assigned_work_hi' => $this->cleanText($this->assigned_work_hi),
-            'image_url' => $this->image_url,
+            'image_url' => $this->final_image_url,
             'order_no' => $this->order_no,
             'show_order' => $this->show_order,
             'updated_at' => $this->updated_at ? $this->updated_at->format('d-m-Y H:i:s') : null,

@@ -53,6 +53,13 @@ class Directory extends Model
             : null;
     }
 
+    public function getFinalImageUrlAttribute()
+    {
+        return $this->image
+            ? base64_encode(Config::get('file_paths')['DIRECTORY_IMAGE_PATH'] . '/' . $this->image)
+            : null;
+    }
+
 
     /**
      * Human-readable description for publication status.

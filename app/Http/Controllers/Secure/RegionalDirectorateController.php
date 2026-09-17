@@ -12,6 +12,7 @@ use App\Http\Requests\PublishRequest;
 use App\Services\RegionalDirectorateService;
 use App\DTO\RegionalDirectorateDto;
 use App\Models\RegionalDirectorate;
+use App\Http\Resources\PublicRegionalDirectorateResource;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -292,7 +293,7 @@ class RegionalDirectorateController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => $this->regionalDirectorateService->findForPublic(),
+            'data' => PublicRegionalDirectorateResource::collection($this->regionalDirectorateService->findForPublic()),
             'lastUpdatedOn' => RegionalDirectorate::getLastUpdatedOrCreatedAt(),
         ]);
     }

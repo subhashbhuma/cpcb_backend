@@ -332,7 +332,7 @@ class NotificationController extends Controller
             $canPublish = $isAdmin || in_array(strtolower($module['publish_perm']), $userPerms);
 
             $query = DB::table($module['table'])
-                ->select(['id', $module['title_col'] . ' as title', 'created_at', 'is_approved']);
+                ->select(['id', $module['title_col'] . ' as title', 'updated_at', 'is_approved']);
 
             if ($hasPublished)
                 $query->addSelect('is_published');
@@ -402,7 +402,7 @@ class NotificationController extends Controller
                     'title' => Str::limit($item->title ?? 'Untitled', 50),
                     'url' => $url,
                     'status' => $statusLabel,
-                    'created' => $item->created_at ? Carbon::parse($item->created_at)->diffForHumans() : '',
+                    'created' => $item->updated_at ? Carbon::parse($item->updated_at)->diffForHumans() : '',
                     'raw_created' => $item->created_at ?? '0000-00-00 00:00:00',
                 ]);
             }
@@ -444,7 +444,7 @@ class NotificationController extends Controller
 
         // Single bulk query for all relevant pages
         $query = DB::table('pages')
-            ->select(['id', 'title', 'created_at', 'is_approved', 'is_published', 'menu_id'])
+            ->select(['id', 'title', 'updated_at', 'is_approved', 'is_published', 'menu_id'])
             ->whereIn('menu_id', $menuIds)
             ->whereNull('deleted_at');
 
@@ -496,7 +496,7 @@ class NotificationController extends Controller
                 'title' => Str::limit($item->title ?? 'Untitled', 50),
                 'url' => route('pages.show', ['page' => $item->id]),
                 'status' => $statusLabel,
-                'created' => $item->created_at ? Carbon::parse($item->created_at)->diffForHumans() : '',
+                'created' => $item->updated_at ? Carbon::parse($item->updated_at)->diffForHumans() : '',
                 'raw_created' => $item->created_at ?? '0000-00-00 00:00:00',
             ]);
         }
