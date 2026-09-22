@@ -686,7 +686,7 @@
             // Find closest container/row to scope search
             let row = button.closest('tr, .row-item, .personnel-row, .activity-row');
             let container = row.length ? row : button.closest('form, .modal, .modal-body, fieldset, .card-body, .card');
-            
+
             // Detect if inputs inside this container have a numeric suffix (e.g., _1, _2) from dynamic rows
             let indexSuffix = '';
             if (container.length) {
@@ -703,15 +703,21 @@
             let sourceName = source + indexSuffix;
             let targetName = target + indexSuffix;
 
-            // Search for English input in closest container/row
-            let englishInput = $();
-            if (container.length) {
-                englishInput = container.find(`input[name$="[${source}]"], textarea[name$="[${source}]"], input[name="${sourceName}"], textarea[name="${sourceName}"], input[name="${source}"], textarea[name="${source}"], .item-${source}-en`);
-            }
+            // Prefer the exact field in the form before looking for repeated row fields.
+            const findTranslationInput = function (scope, field, fieldName, fieldClass) {
+                let input = scope.find(`#${field}, input[name="${field}"], textarea[name="${field}"], input[name="${fieldName}"], textarea[name="${fieldName}"]`).first();
 
-            if (englishInput.length === 0) {
-                englishInput = $(`input[name$="[${source}]"], textarea[name$="[${source}]"], input[name="${sourceName}"], textarea[name="${sourceName}"], input[name="${source}"], textarea[name="${source}"], .item-${source}-en`);
-            }
+                if (input.length === 0) {
+                    input = scope.find(`input[name$="[${field}]"], textarea[name$="[${field}]"], .item-${fieldClass}`).first();
+                }
+
+                return input;
+            };
+
+            // Search for English input in closest container/row
+            let englishInput = container.length
+                ? findTranslationInput(container, source, sourceName, `${source}-en`)
+                : findTranslationInput($(document), source, sourceName, `${source}-en`);
 
             let englishText = englishInput.first().val();
 
@@ -731,13 +737,9 @@
                 },
                 success: function (res) {
                     if (res.success) {
-                        let targetInput = $();
-                        if (container.length) {
-                            targetInput = container.find(`input[name$="[${target}]"], textarea[name$="[${target}]"], input[name="${targetName}"], textarea[name="${targetName}"], input[name="${target}"], textarea[name="${target}"], .item-${target}-hi`);
-                        }
-                        if (targetInput.length === 0) {
-                            targetInput = $(`input[name$="[${target}]"], textarea[name$="[${target}]"], input[name="${targetName}"], textarea[name="${targetName}"], input[name="${target}"], textarea[name="${target}"], .item-${target}-hi`);
-                        }
+                        let targetInput = container.length
+                            ? findTranslationInput(container, target, targetName, `${target.replace(/_hi$/, '')}-hi`)
+                            : findTranslationInput($(document), target, targetName, `${target.replace(/_hi$/, '')}-hi`);
 
                         targetInput.val(res.translation);
                     } else {
