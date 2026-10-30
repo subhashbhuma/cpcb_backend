@@ -95,6 +95,10 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            'options' => [
+                \PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
+                \PDO::ATTR_EMULATE_PREPARES => true,
+            ],
         ],
 
         'sqlsrv' => [

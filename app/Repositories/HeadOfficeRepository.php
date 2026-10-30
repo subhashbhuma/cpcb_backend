@@ -37,7 +37,7 @@ class HeadOfficeRepository
     public function findForPublic($limit = null)
     {
         $query = HeadOffice::where('is_published', true)
-            ->where('is_approved', 1)
+            ->where('is_approved', true)
             ->orderBy('order', 'asc')
             ->latest()
             ->with(['division', 'active_personnels', 'active_profile_activities']);

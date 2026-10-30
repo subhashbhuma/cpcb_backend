@@ -70,28 +70,19 @@ class AnnualReport extends Model
 
     public static function getLastUpdatedOrCreatedAt($type = null)
     {
-        $model = new static();
-        $tableName = $model->getTable();
+        return \Illuminate\Support\Facades\Cache::remember("last_updated_annual_reports_" . ($type ?? 'all'), 120, function () use ($type) {
+            $query = DB::table('annual_reports')->whereNull('deleted_at');
 
-        $columns = Schema::getColumnListing($tableName);
+            if ($type) {
+                $query->where('type', $type);
+            }
 
-        $query = DB::table($tableName)->whereNull('deleted_at');
+            $timestamp = $query->max('updated_at') ?? $query->max('created_at');
 
-        if ($type && Schema::hasColumn($tableName, 'type')) {
-            $query->where('type', $type);
-        }
-
-        if (in_array('updated_at', $columns)) {
-            $timestamp = $query->max('updated_at');
-        } elseif (in_array('created_at', $columns)) {
-            $timestamp = $query->max('created_at');
-        } else {
-            throw new \Exception("Table '{$tableName}' has no timestamps.");
-        }
-
-        return $timestamp
-            ? Carbon::parse($timestamp)->format('d-m-Y H:i:s')
-            : null;
+            return $timestamp
+                ? Carbon::parse($timestamp)->format('d-m-Y H:i:s')
+                : null;
+        });
     }
 
     public function getActivitylogOptions(): LogOptions

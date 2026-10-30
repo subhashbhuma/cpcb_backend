@@ -18,28 +18,39 @@ class CacheResponse
      */
     public function handle(Request $request, Closure $next, $ttl = 300)
     {
-        // Only cache GET requests
-        if ($request->method() !== 'GET') {
+        // Only cache GET requests or read-only public datatable/fetch POST queries
+        $isGet = $request->method() === 'GET';
+        $isReadOnlyPost = $request->method() === 'POST' && (
+            str_contains($request->path(), 'datatable') ||
+            str_contains($request->path(), 'fetchAqiList')
+        );
+
+        if (!$isGet && !$isReadOnlyPost) {
             return $next($request);
         }
 
         // List of endpoints to completely exclude from cache
         $excludePaths = [
             'captcha',
+            'visitor/add',
             'visitor/stats',
             'search/suggestions',
             'today-entries',
+            'submit',
+            'otp',
+            'login',
         ];
 
         foreach ($excludePaths as $path) {
-            if ($request->is("api/{$path}") || $request->is("*/{$path}*")) {
+            if ($request->is("api/{$path}*") || $request->is("*/{$path}*")) {
                 return $next($request);
             }
         }
 
-        // Generate cache key based on full URL (including query string) and language header
+        // Generate cache key based on URL, language, and request payload
         $language = $request->header('language', 'en');
-        $cacheKey = 'api_response_' . md5($request->fullUrl() . '_' . $language);
+        $payload = $isReadOnlyPost ? json_encode($request->all()) : '';
+        $cacheKey = 'api_response_' . md5($request->fullUrl() . '_' . $language . '_' . $payload);
 
         // Serve from cache if it exists
         $cachedData = Cache::get($cacheKey);

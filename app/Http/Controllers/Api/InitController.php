@@ -27,41 +27,40 @@ class InitController extends Controller
     public function index()
     {
         try {
-            // 1. Fetch Site Settings
-            $siteSetting = $this->siteSettingService->findFirst();
-            $settingsData = $siteSetting ? SiteSettingResource::make($siteSetting) : null;
+            $data = \Illuminate\Support\Facades\Cache::remember('layout_init_consolidated', 3600, function () {
+                // 1. Fetch Site Settings
+                $siteSetting = $this->siteSettingService->findFirst();
+                $settingsData = $siteSetting ? SiteSettingResource::make($siteSetting) : null;
 
-            // 2. Fetch Visitor Stats
-            $visitorStats = $this->visitorService->getStats();
+                // 2. Fetch Visitor Stats
+                $visitorStats = $this->visitorService->getStats();
 
-            // 3. Fetch Menus (Top Header and Main Header)
-            $topHeaderMenus = Menu::with('children')
-                ->where('location', 'top-header')
-                ->orderBy('order', 'asc')
-                ->where('parent_id', null)
-                ->get();
+                // 3. Fetch Menus (Top Header and Main Header)
+                $topHeaderMenus = Menu::with('children')
+                    ->where('location', 'top-header')
+                    ->orderBy('order', 'asc')
+                    ->where('parent_id', null)
+                    ->get();
 
-            $headerMenus = Menu::with('children')
-                ->where('location', 'header')
-                ->orderBy('order', 'asc')
-                ->where('parent_id', null)
-                ->get();
+                $headerMenus = Menu::with('children')
+                    ->where('location', 'header')
+                    ->orderBy('order', 'asc')
+                    ->where('parent_id', null)
+                    ->get();
 
-            $footerQuickLinks = Menu::with('children')
-                ->where('location', 'footer-quickLink')
-                ->orderBy('order', 'asc')
-                ->where('parent_id', null)
-                ->get();
+                $footerQuickLinks = Menu::with('children')
+                    ->where('location', 'footer-quickLink')
+                    ->orderBy('order', 'asc')
+                    ->where('parent_id', null)
+                    ->get();
 
-            $sidebarDefaultMenus = Menu::with('children')
-                ->where('location', 'default')
-                ->orderBy('order', 'asc')
-                ->where('parent_id', null)
-                ->get();
+                $sidebarDefaultMenus = Menu::with('children')
+                    ->where('location', 'default')
+                    ->orderBy('order', 'asc')
+                    ->where('parent_id', null)
+                    ->get();
 
-            return response()->json([
-                'success' => true,
-                'data' => [
+                return [
                     'settings' => $settingsData,
                     'visitor_stats' => $visitorStats,
                     'menus' => [
@@ -70,7 +69,12 @@ class InitController extends Controller
                         'footer_quick_links' => $footerQuickLinks,
                         'sidebar_default' => $sidebarDefaultMenus,
                     ],
-                ],
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
             Log::error('Layout initialization failed: ' . $e->getMessage());

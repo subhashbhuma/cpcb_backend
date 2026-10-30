@@ -99,20 +99,11 @@ class Directory extends Model
      */
     public static function getLastUpdatedOrCreatedAt()
     {
-        $model = new static();
-        $tableName = $model->getTable();
-        $columns = Schema::getColumnListing($tableName);
-        $query = DB::table($tableName)->whereNull('deleted_at');
-
-        if (in_array('updated_at', $columns)) {
-            $timestamp = $query->max('updated_at');
-        } elseif (in_array('created_at', $columns)) {
-            $timestamp = $query->max('created_at');
-        } else {
-            return null;
-        }
-
-        return $timestamp ? Carbon::parse($timestamp)->format('d-m-Y H:i:s') : null;
+        return \Illuminate\Support\Facades\Cache::remember("last_updated_directories", 120, function () {
+            $query = DB::table('directories')->whereNull('deleted_at');
+            $timestamp = $query->max('updated_at') ?? $query->max('created_at');
+            return $timestamp ? Carbon::parse($timestamp)->format('d-m-Y H:i:s') : null;
+        });
     }
 
     /**
