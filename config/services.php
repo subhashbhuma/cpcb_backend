@@ -35,23 +35,47 @@ return [
         ],
     ],
 
-  'sms' => [
-    'endpoint' => env('SMS_DLT_ENDPOINT', 'https://msdgweb.mgov.gov.in/esms/sendsmsrequestDLT'),
-    'username'      => env('SMS_USERNAME'),
-    'password'      => env('SMS_PASSWORD'),
-    'sender_id'     => env('SMS_SENDER_ID'),  
-    'entity_id'     => env('SMS_DLT_ENTITY_ID'),
-    'telemarketer_id'=> env('SMS_DLT_TELEMARKETER_ID'),
-    'secure_key'    => env('SMS_SECURE_KEY'),
-    'header'        => env('SMS_HEADER'),
-    'timeout' => env('SMS_TIMEOUT', 15),
-    'whitelisted_ip'   => env('SMS_WHITELISTED_IP'),
-    'whitelisted_port' => env('SMS_WHITELISTED_PORT'),
-    'templates' => [
-        'otp' => [
-            'id'   => env('SMS_TEMPLATE_ID'),
-            'text' =>env('SMS_TEMPLATE'),
+    'sms' => [
+        'endpoint' => env('SMS_DLT_ENDPOINT', 'https://msdgweb.mgov.gov.in/esms/sendsmsrequestDLT'),
+        'username' => env('SMS_USERNAME'),
+        'password' => env('SMS_PASSWORD'),
+        'sender_id' => env('SMS_SENDER_ID'),
+        'entity_id' => env('SMS_DLT_ENTITY_ID'),
+        'telemarketer_id' => env('SMS_DLT_TELEMARKETER_ID'),
+        'secure_key' => env('SMS_SECURE_KEY'),
+        'header' => env('SMS_HEADER'),
+        'timeout' => env('SMS_TIMEOUT', 15),
+        'whitelisted_ip' => env('SMS_WHITELISTED_IP'),
+        'whitelisted_port' => env('SMS_WHITELISTED_PORT'),
+        'templates' => [
+
+            'otp' => [
+                'id' => env('SMS_TEMPLATE_ID'),
+                'text' => env('SMS_TEMPLATE'),
+            ],
+
+            'EMPLOYEE_LOGIN' => [
+                'id' => env('EMPLOYEE_TEMPLATE_ID'),
+                'text' => env('EMPLOYEE_TEMPLATE'),
+            ],
+
+            'USER_LOGIN' => [
+                'id' => env('USER_TEMPLATE_ID'),
+                'text' => env('USER_TEMPLATE'),
+            ],
+
+            'USER_FORGOT_PASSWORD' => [
+                'id' => env('USER_FORGOT_PASSWORD_TEMPLATE_ID'),
+                'text' => env('USER_FORGOT_PASSWORD_TEMPLATE'),
+            ],
+
+            'EMPLOYEE_FORGOT_PASSWORD' => [
+                'id' => env('EMPLOYEE_FORGOT_PASSWORD_TEMPLATE_ID'),
+                'text' => env('EMPLOYEE_FORGOT_PASSWORD_TEMPLATE'),
+            ],
+
         ],
+
+
     ],
-  ],
 ];

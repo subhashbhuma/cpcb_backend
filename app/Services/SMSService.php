@@ -21,44 +21,40 @@ class SMSService
 
     public function __construct()
     {
-        $this->endpoint       = config('services.sms.endpoint');
-        $this->username       = config('services.sms.username');
-        $this->password       = config('services.sms.password');
-        $this->senderId       = config('services.sms.sender_id');
-        $this->entityId       = config('services.sms.entity_id');
+        $this->endpoint = config('services.sms.endpoint');
+        $this->username = config('services.sms.username');
+        $this->password = config('services.sms.password');
+        $this->senderId = config('services.sms.sender_id');
+        $this->entityId = config('services.sms.entity_id');
         $this->telemarketerId = config('services.sms.telemarketer_id');
-        $this->secureKey      = config('services.sms.secure_key');
-        $this->header         = config('services.sms.header');
-        $this->timeout        = (int) config('services.sms.timeout', 15);
+        $this->secureKey = config('services.sms.secure_key');
+        $this->header = config('services.sms.header');
+        $this->timeout = (int) config('services.sms.timeout', 15);
     }
 
 
-    public function sendOtp(string $mobile, string|int $otp): array
+    public function sendOtp(string $mobile, string|int $otp, string $templateKey = 'otp'): array
     {
-        return $this->sendTemplate($mobile, 'otp', [$otp]);
+        return $this->sendTemplate($mobile, $templateKey, [$otp]);
     }
 
     public function sendTemplate(string $mobile, string $templateKey, array $vars = []): array
     {
         $template = config("services.sms.templates.{$templateKey}");
 
-        if (! $template) {
+        if (!$template) {
             throw new InvalidArgumentException("SMS template [{$templateKey}] is not configured.");
         }
 
         $message = $this->fillTemplate($template['text'], $vars);
 
-        return [
-            'success' => true,
-            'code'    => null,
-            'raw'     => null,
-        ];
         return $this->send($mobile, $message, $template['id']);
     }
 
     public function send(string $mobile, string $message, string $templateId): array
     {
         if (empty($this->endpoint) || empty($this->username) || empty($this->password) || empty($this->senderId)) {
+            Log::error('SMS Service is not fully configured. Missing SMS credentials in .env file.');
             throw new \RuntimeException('SMS Service is not fully configured. Missing SMS credentials in .env file.');
         }
 
@@ -66,14 +62,14 @@ class SMSService
 
         $key = hash('sha512', trim($this->username) . trim($this->senderId) . trim($message) . trim($this->secureKey));
         $payload = [
-            'username'   => trim($this->username),
-            'password'   => trim($this->password),
-            'senderid'   => trim($this->senderId),
-            'mobileno'   => trim($mobile),
-            'content'    => trim($message),
-            'smsservicetype'=>'singlemsg',
+            'username' => trim($this->username),
+            'password' => trim($this->password),
+            'senderid' => trim($this->senderId),
+            'mobileno' => trim($mobile),
+            'content' => trim($message),
+            'smsservicetype' => 'singlemsg',
             'templateid' => trim($templateId),
-            'key'        => trim($key),
+            'key' => trim($key),
         ];
 
         if ($this->header) {
@@ -87,21 +83,31 @@ class SMSService
         } catch (\Throwable $e) {
             Log::error('SMS gateway request failed', [
                 'mobile' => $mobile,
-                'error'  => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw new RuntimeException('Unable to reach SMS gateway: ' . $e->getMessage(), previous: $e);
         }
 
         $raw = trim($response->body());
+        $parsed = $this->parseResponse($raw);
 
-        Log::info('SMS gateway response', [
-            'mobile' => $mobile,
-            'status' => $response->status(),
-            'raw'    => $raw,
-        ]);
+        if (!$response->successful() || !($parsed['success'] ?? false)) {
+            Log::error('SMS gateway rejected or error response', [
+                'mobile' => $mobile,
+                'status' => $response->status(),
+                'code' => $parsed['code'] ?? null,
+                'raw' => $raw,
+            ]);
+        } else {
+            Log::info('SMS gateway response', [
+                'mobile' => $mobile,
+                'status' => $response->status(),
+                'raw' => $raw,
+            ]);
+        }
 
-        return $this->parseResponse($raw);
+        return $parsed;
     }
 
     protected function parseResponse(string $raw): array
@@ -112,16 +118,16 @@ class SMSService
             if (str_starts_with($raw, $code)) {
                 return [
                     'success' => false,
-                    'code'    => $code,
-                    'raw'     => $raw,
+                    'code' => $code,
+                    'raw' => $raw,
                 ];
             }
         }
 
         return [
-            'success' => $raw !== '' ,
-            'code'    => null,
-            'raw'     => $raw,
+            'success' => $raw !== '',
+            'code' => null,
+            'raw' => $raw,
         ];
     }
 

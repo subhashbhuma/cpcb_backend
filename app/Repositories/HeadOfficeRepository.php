@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\HeadOffice;
+use Illuminate\Support\Facades\DB;
 
 class HeadOfficeRepository
 {
@@ -36,8 +37,8 @@ class HeadOfficeRepository
     
     public function findForPublic($limit = null)
     {
-        $query = HeadOffice::where('is_published', true)
-            ->where('is_approved', true)
+        $query = HeadOffice::where('is_published', DB::raw('TRUE'))
+            ->where('is_approved', 1)
             ->orderBy('order', 'asc')
             ->latest()
             ->with(['division', 'active_personnels', 'active_profile_activities']);
@@ -49,4 +50,3 @@ class HeadOfficeRepository
         return $query->get();
     }
 }
-

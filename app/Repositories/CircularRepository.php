@@ -21,7 +21,7 @@ class CircularRepository
     public function fetchForDatatable($archiveStatus = null, $category = null)
     {
         $threeMonthsAgo = Carbon::now()->subDays(90)->startOfDay();
-        $query = Circular::with(['circularCategory', 'division'])->where('is_published', 1)->orderBy('published_date', 'desc');
+        $query = Circular::with(['circularCategory', 'division'])->published()->orderBy('published_date', 'desc');
 
         if (Auth::user()->hasRole("EMPLOYEE")):
             if ($archiveStatus === 'archive') {
@@ -41,9 +41,9 @@ class CircularRepository
     public function findForPublic($limit = null)
     {
         if ($limit == null) {
-            return Circular::with('circularCategory')->where('is_published', 1)->orderBy('published_date', 'desc')->get();
+            return Circular::with('circularCategory')->published()->orderBy('published_date', 'desc')->get();
         }
-        return Circular::with('circularCategory')->where('is_published', 1)->limit($limit)->orderBy('published_date', 'desc')->get();
+        return Circular::with('circularCategory')->published()->limit($limit)->orderBy('published_date', 'desc')->get();
     }
 
     public function findAll()

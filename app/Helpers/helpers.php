@@ -95,10 +95,8 @@ if (!function_exists('getWhatsNew')) {
     {
         $circulars = Circular::select('*')
             ->with('circularCategory')
-            ->where([
-                'is_published' => 1,
-                'is_approved' => 1,
-            ])
+            ->published()
+            ->approved()
             ->limit($limit)
             ->orderBy('created_at', 'desc')
             ->get()

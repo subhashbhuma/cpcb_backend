@@ -59,6 +59,17 @@
                             </p>
                         </div>
 
+                        {{-- Login Credentials Instruction Notice --}}
+                        <div class="alert alert-primary d-flex align-items-center justify-content-between p-2 mb-3" role="alert" style="font-size: 0.85rem; border-left: 4px solid #0d6efd;">
+                            <div>
+                                <i class="fa fa-info-circle me-1 text-primary"></i>
+                                <span>Use <strong>Employee code</strong> (e.g. <code>CPCB****</code>) & <strong>PAN No.</strong> as password.</span>
+                            </div>
+                            <button type="button" id="viewInstructionBtn" class="btn btn-sm btn-outline-primary py-0 px-2 ms-2 text-nowrap" data-bs-toggle="modal" data-bs-target="#loginInstructionModal">
+                                View Info
+                            </button>
+                        </div>
+
                         <form action="" id="loginForm" autocomplete="off">
                             @csrf
 
@@ -198,6 +209,73 @@
             </div>
         </div>
     </div>
+
+    {{-- ============================== --}}
+    {{-- Login Instructions Modal Popup --}}
+    {{-- ============================== --}}
+    <div class="modal fade" id="loginInstructionModal" tabindex="-1" aria-labelledby="loginInstructionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0 rounded-3 overflow-hidden">
+                <div class="modal-header bg-primary text-white py-3">
+                    <h5 class="modal-title text-white d-flex align-items-center gap-2 mb-0" id="loginInstructionModalLabel">
+                        <i class="fa fa-info-circle"></i>
+                        <span>Important Login Instructions</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle mx-auto mb-2 d-inline-flex align-items-center justify-content-center"
+                            style="width: 56px; height: 56px; background-color: rgba(13, 110, 253, 0.1);">
+                            <i class="fa fa-id-card fa-2x text-primary"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">CPCB Portal Login Credentials</h6>
+                        <p class="text-muted small mb-0">Please use the following credentials to sign in:</p>
+                    </div>
+
+                    <div class="card bg-light border-0 mb-3 shadow-none">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-start gap-3 mb-3">
+                                <div class="text-primary mt-1">
+                                    <i class="fa fa-user-circle fa-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">User ID / Username:</div>
+                                    <div class="text-muted small">
+                                        Use your <strong>Employee code</strong> like <span class="badge bg-primary text-white font-monospace px-2 py-1">CPCB****</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-2 text-muted opacity-25">
+
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="text-success mt-1">
+                                    <i class="fa fa-key fa-lg"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">Password:</div>
+                                    <div class="text-muted small">
+                                        Use your <strong>PAN No.</strong> (in CAPITAL letters, e.g. <span class="badge bg-success text-white font-monospace px-2 py-1">ABCDE1234F</span>) as password.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning py-2 px-3 small mb-0 d-flex align-items-center gap-2">
+                        <i class="fa fa-shield-alt text-warning fs-5"></i>
+                        <span>For security reasons, never share your login credentials or OTP with anyone.</span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2 px-3 justify-content-center">
+                    <button type="button" class="btn btn-primary px-4 fw-semibold" data-bs-dismiss="modal">
+                        <i class="fa fa-check-circle me-1"></i> Proceed to Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('pages-scripts')
@@ -234,6 +312,19 @@
             const isPassword = passwordInput.attr('type') === 'password';
             passwordInput.attr('type', isPassword ? 'text' : 'password');
             icon.toggleClass('fa-eye fa-eye-slash');
+        });
+
+        // Open Login Instructions Popup on "View Info" button click
+        $('#viewInstructionBtn').on('click', function () {
+            const modalEl = document.getElementById('loginInstructionModal');
+            if (modalEl) {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const instructionModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    instructionModal.show();
+                } else if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+                    $('#loginInstructionModal').modal('show');
+                }
+            }
         });
 
     });

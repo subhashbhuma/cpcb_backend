@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Expression;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class Otp extends Model
@@ -220,7 +222,6 @@ class Otp extends Model
                 'mobile' => null,
                 'otp' => $otp,
                 'type' => 'email',
-                'is_verified' => false,
                 'expires_at' => $expiresAt
             ]);
         }
@@ -232,7 +233,6 @@ class Otp extends Model
                 'mobile' => $mobile,
                 'otp' => $otp,
                 'type' => 'mobile',
-                'is_verified' => false,
                 'expires_at' => $expiresAt
             ]);
         }
@@ -253,7 +253,7 @@ class Otp extends Model
     public static function verifyOtp($otp, $email = null, $mobile = null)
     {
         $query = self::where('otp', $otp)
-            ->where('is_verified', false)
+            ->where('is_verified', self::booleanExpression(false))
             ->where('expires_at', '>', Carbon::now());
 
         if ($email || $mobile) {
@@ -272,7 +272,7 @@ class Otp extends Model
 
         if ($otpRecords->count() > 0) {
             foreach ($otpRecords as $record) {
-                $record->update(['is_verified' => true]);
+                $record->update(['is_verified' => self::booleanExpression(true)]);
             }
             return true;
         }
@@ -294,6 +294,15 @@ class Otp extends Model
     public function isExpired()
     {
         return $this->expires_at < Carbon::now();
+    }
+
+    private static function booleanExpression(bool $value): Expression
+    {
+        $literal = DB::connection()->getDriverName() === 'sqlsrv'
+            ? ($value ? '1' : '0')
+            : ($value ? 'TRUE' : 'FALSE');
+
+        return DB::raw($literal);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\RegionalDirectorate;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RegionalDirectorateRepository
 {
@@ -38,7 +39,7 @@ class RegionalDirectorateRepository
 
     public function findForPublic()
     {
-        return RegionalDirectorate::where('is_published', 1)
+        return RegionalDirectorate::where('is_published', DB::raw('TRUE'))
             ->where('is_approved', 1)
             ->orderBy('order', 'asc')
             ->orderBy('id', 'asc')
@@ -46,4 +47,3 @@ class RegionalDirectorateRepository
             ->get();
     }
 }
-

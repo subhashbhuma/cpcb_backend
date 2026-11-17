@@ -20,8 +20,8 @@ class DashboardController extends Controller
             ],
             'circulars' => [
                 'total' => \App\Models\Circular::count(),
-                'published' => \App\Models\Circular::where('is_published', 1)->count(),
-                'pending' => \App\Models\Circular::where('is_approved', 0)->count(),
+                'published' => \App\Models\Circular::published()->count(),
+                'pending' => \App\Models\Circular::pending()->count(),
             ],
             'directions' => [
                 'total' => \App\Models\Direction::count(),
@@ -74,9 +74,9 @@ class DashboardController extends Controller
             'media_files' => \App\Models\Media::count(),
             'feedback' => \App\Models\Feedback::count(),
             'complaints' => \App\Models\Complaint::count(),
-            'employee_circulars' => \App\Models\Circular::where('category', 1)->where('is_approved', 1)->where('published_date', '>=', Carbon::now()->subMonth())->count(),
-            'employee_memorandums' => \App\Models\Circular::where('category', 2)->where('is_approved', 1)->where('published_date', '>=', Carbon::now()->subMonth())->count(),
-            'employee_office_orders' => \App\Models\Circular::where('category', 3)->where('is_approved', 1)->where('published_date', '>=', Carbon::now()->subMonth())->count(),
+            'employee_circulars' => \App\Models\Circular::where('category', 1)->approved()->where('published_date', '>=', Carbon::now()->subMonth())->count(),
+            'employee_memorandums' => \App\Models\Circular::where('category', 2)->approved()->where('published_date', '>=', Carbon::now()->subMonth())->count(),
+            'employee_office_orders' => \App\Models\Circular::where('category', 3)->approved()->where('published_date', '>=', Carbon::now()->subMonth())->count(),
         ];
 
         $recentActivities = \Spatie\Activitylog\Models\Activity::with('causer')

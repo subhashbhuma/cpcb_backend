@@ -440,7 +440,7 @@ class CircularController extends Controller
     {
         try {
             $categoryFilter = $request->category;
-            $baseQuery = Circular::with('circularCategory')->where('is_published', 1);
+            $baseQuery = Circular::with('circularCategory')->published();
 
 
             $threeMonthsAgo = Carbon::now()->subDays(90)->startOfDay();

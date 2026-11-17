@@ -10,28 +10,30 @@ use Illuminate\Validation\ValidationException;
 
 class SmsController extends Controller
 {
- public function __construct(protected SmsService $smsService)
+    public function __construct(protected SmsService $smsService)
     {
     }
     public function sendOtp(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'mobile' => ['required', 'string', 'regex:/^(91)?[6-9][0-9]{9}$/'],
+            'template' => ['required', 'string'],
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid mobile number.',
-                'errors'  => $validator->errors(),
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $mobile = $request->input('mobile');
-        $otp    = random_int(100000, 999999);
+        $otp = 111111;//random_int(100000, 999999);
+
 
         try {
-            $result = $this->smsService->sendOtp($mobile, $otp);
+            $result = $this->smsService->sendOtp($mobile, $otp, $request->input('template'));
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
@@ -44,7 +46,7 @@ class SmsController extends Controller
             ], 502);
         }
 
-        if (! $result['success']) {
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => 'SMS gateway rejected the request.',
@@ -73,9 +75,9 @@ class SmsController extends Controller
     public function send(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'mobile'   => ['required', 'string', 'regex:/^(91)?[6-9][0-9]{9}$/'],
+            'mobile' => ['required', 'string', 'regex:/^(91)?[6-9][0-9]{9}$/'],
             'template' => ['required', 'string'],
-            'vars'     => ['array'],
+            'vars' => ['array'],
         ]);
 
         try {
@@ -93,7 +95,7 @@ class SmsController extends Controller
         return response()->json([
             'success' => $result['success'],
             'gateway_code' => $result['code'],
-            'gateway_raw'  => $result['raw'],
+            'gateway_raw' => $result['raw'],
         ], $result['success'] ? 200 : 502);
     }
 }

@@ -87,7 +87,7 @@ class EmailService
             $emailLogDto = new EmailLogDto(
                 $email,
                 'backend_otp',
-                'Your Gallantry Awards Login OTP',
+                'Your CPCB Login OTP',
                 'sent',
                 '',
                 '',
@@ -107,7 +107,7 @@ class EmailService
             $emailLogDto = new EmailLogDto(
                 $email,
                 'backend_otp',
-                'Your Gallantry Awards Login OTP',
+                'Your CPCB Login OTP',
                 'failed',
                 '',
                 $e->getMessage(),

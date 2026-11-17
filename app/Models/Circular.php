@@ -2,6 +2,7 @@
 
 namespace App\Models;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Config;
@@ -35,6 +36,30 @@ class Circular extends Model
     ];
 
     protected $appends = ['is_approved_desc', 'is_published_desc', 'file_url', 'file_url_hi', 'file_path_en', 'file_path_hi'];
+
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('is_published', DB::raw($this->booleanLiteral(true)));
+    }
+
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('is_approved', DB::raw($this->booleanLiteral(true)));
+    }
+
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('is_approved', DB::raw($this->booleanLiteral(false)));
+    }
+
+    private function booleanLiteral(bool $value): string
+    {
+        if (DB::connection()->getDriverName() === 'sqlsrv') {
+            return $value ? '1' : '0';
+        }
+
+        return $value ? 'TRUE' : 'FALSE';
+    }
 
     public function getFileUrlAttribute()
     {

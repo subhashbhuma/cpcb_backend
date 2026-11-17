@@ -184,15 +184,24 @@ class LoginController extends Controller
         $this->rateLimitService->recordBackendOtpGenerationAttempt($request, $user);
 
         // Send OTP via email
-        // EmailService::sendBackendOtpEmail($user->email, $otpData['otp']);
+        try {
+            EmailService::sendBackendOtpEmail($user->email, $otpData['otp']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send backend OTP email to ' . $user->email . ': ' . $e->getMessage());
+        }
 
         // Send OTP via SMS
-        // try {
-        //     $smsService = new SMSService();
-        //     $smsService->sendOtp($user->mobile_number, $otpData['otp']);
-        // } catch (\Exception $e) {
-        //     Log::error('Failed to send OTP SMS: ' . $e->getMessage());
-        // }
+        if (!empty($user->mobile_number)) {
+            try {
+                $smsService = new SMSService();
+                $smsResult = $smsService->sendOtp($user->mobile_number, $otpData['otp']);
+                if (!($smsResult['success'] ?? false)) {
+                    Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . json_encode($smsResult));
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . $e->getMessage());
+            }
+        }
 
         // Store user ID in session temporarily
         session(['temp_user_id' => $user->id]);
@@ -335,15 +344,24 @@ class LoginController extends Controller
         $this->rateLimitService->recordBackendOtpResendAttempt($request, $user);
 
         // Send OTP via email
-        // EmailService::sendBackendOtpEmail($user->email, $otpData['otp']);
+        try {
+            EmailService::sendBackendOtpEmail($user->email, $otpData['otp']);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send backend OTP email to ' . $user->email . ': ' . $e->getMessage());
+        }
 
         // Send OTP via SMS
-        // try {
-        //     $smsService = new SMSService();
-        //     $smsService->sendOtp($user->mobile_number, $otpData['otp']);
-        // } catch (\Exception $e) {
-        //     Log::error('Failed to send OTP SMS: ' . $e->getMessage());
-        // }
+        if (!empty($user->mobile_number)) {
+            try {
+                $smsService = new SMSService();
+                $smsResult = $smsService->sendOtp($user->mobile_number, $otpData['otp']);
+                if (!($smsResult['success'] ?? false)) {
+                    Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . json_encode($smsResult));
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'status' => 'success',
