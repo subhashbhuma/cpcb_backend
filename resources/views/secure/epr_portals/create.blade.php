@@ -27,10 +27,15 @@
                                 <input type="text" name="title_hi" class="form-control" required />
                             </div>
 
-                            <div class="col-md-12 col-12 mb-3">
+                            <div class="col-md-6 col-12 mb-3">
                                 <label class="form-label">Portal Link: <span class="text-danger">*</span></label>
                                 <input type="text" name="link" class="form-control" placeholder="https://example.com"
                                     required />
+                            </div>
+
+                            <div class="col-md-6 col-12 mb-3">
+                                <label class="form-label">Order:</label>
+                                <input type="number" name="order" class="form-control" value="0" min="0" />
                             </div>
 
                             <div class="col-md-12 col-12 mb-3">
@@ -71,6 +76,10 @@
                         required: true,
                         url: true,
                         maxlength: 2048
+                    },
+                    order: {
+                        digits: true,
+                        min: 0
                     }
                 },
                 submitHandler: function (form) {

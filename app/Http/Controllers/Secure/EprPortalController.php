@@ -84,11 +84,13 @@ class EprPortalController extends Controller
     {
         try {
             $isLive = $request->has('is_live') && $request->is_live ? 1 : 0;
+            $order = $request->input('order', 0) ?? 0;
 
             $portalDto = new EprPortalDto(
                 $request->input('title'),
                 $request->input('title_hi'),
                 $request->input('link'),
+                $order,
                 0,
                 0,
                 $isLive,
@@ -155,11 +157,13 @@ class EprPortalController extends Controller
     {
         try {
             $isLive = $request->has('is_live') && $request->is_live ? 1 : 0;
+            $order = $request->input('order', 0) ?? 0;
 
             $portalDto = new EprPortalDto(
                 $request->input('title'),
                 $request->input('title_hi'),
                 $request->input('link'),
+                $order,
                 0,
                 0,
                 $isLive,

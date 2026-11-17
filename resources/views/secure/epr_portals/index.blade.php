@@ -24,6 +24,7 @@
                                     <th>Sl. No.</th>
                                     <th>Title</th>
                                     <th>Link</th>
+                                    <th>Order</th>
                                     <th>Is Approved</th>
                                     <th>Is Published</th>
                                     <th>Is Live</th>
@@ -68,6 +69,12 @@
                 {
                     data: 'link',
                     name: 'link'
+                },
+                {
+                    data: 'order',
+                    name: 'order',
+                    width: '8%',
+                    defaultContent: '0'
                 },
                 {
                     data: null,

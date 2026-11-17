@@ -7,6 +7,7 @@ class EprPortalDto
     public $title;
     public $title_hi;
     public $link;
+    public $order;
     public $is_approved;
     public $is_published;
     public $is_live;
@@ -19,17 +20,19 @@ class EprPortalDto
         $title,
         $title_hi,
         $link,
+        $order = 0,
         $is_approved = 0,
         $is_published = 0,
         $is_live = 0,
         $remarks = null,
         $publish_remark = null,
-        $created_by,
+        $created_by = null,
         $updated_by = null
     ) {
         $this->title = $title;
         $this->title_hi = $title_hi;
         $this->link = $link;
+        $this->order = $order !== null ? (int) $order : 0;
         $this->is_approved = $is_approved;
         $this->is_published = $is_published;
         $this->is_live = $is_live;
@@ -45,6 +48,7 @@ class EprPortalDto
             'title' => $this->title,
             'title_hi' => $this->title_hi,
             'link' => $this->link,
+            'order' => $this->order,
             'is_approved' => $this->is_approved,
             'is_published' => $this->is_published,
             'is_live' => $this->is_live,

@@ -123,6 +123,7 @@ Route::middleware('referer.check')->group(function () {
         Route::post('/users/unlock-account/{user}', [UserController::class, 'unlockAccount'])->name('users.unlock-account');
         Route::put('/users/{user}', [UserController::class, 'update'])->middleware('can:edit user')->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('can:delete user')->name('users.destroy');
+        Route::post('/users/{id}/restore', [UserController::class, 'restore'])->middleware('can:delete user')->name('users.restore');
         Route::post('/users/fetch-for-datatable', [UserController::class, 'fetchForDatatable'])->middleware('can:view user')->name('users.fetch-for-datatable');
 
         // ------------------------------------

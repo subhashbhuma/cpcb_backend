@@ -20,6 +20,7 @@ class EprPortal extends Model
         'title',
         'title_hi',
         'link',
+        'order',
         'is_approved',
         'is_published',
         'is_live',
@@ -27,6 +28,10 @@ class EprPortal extends Model
         'publish_remark',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+        'order' => 'integer',
     ];
     
     protected $appends = ['is_approved_desc', 'is_published_desc'];

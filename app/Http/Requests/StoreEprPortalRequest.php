@@ -27,6 +27,7 @@ class StoreEprPortalRequest extends FormRequest
             'title' => 'required|string|max:255|regex:/^[\p{L}\p{N}\p{M}\s\.\,\-_&\(\)\:\;\'’"\/@#\$%?!\+=\[\]\*।॥–—]*$/u',
             'title_hi' => 'required|string|max:255|regex:/^[\p{L}\p{N}\p{M}\s\.\,\-_&\(\)\:\;\'’"\/@#\$%?!\+=\[\]\*।॥–—]*$/u',
             'link' => 'nullable|url|max:2048',
+            'order' => 'nullable|integer|min:0',
             'is_approved' => 'nullable|in:0,1,2',
             'is_published' => 'nullable|in:0,1',
             'is_live' => 'nullable|in:0,1',

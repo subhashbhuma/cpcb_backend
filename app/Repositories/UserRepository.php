@@ -51,4 +51,18 @@ class UserRepository
         }
         return false;
     }
+
+    public function restore($id)
+    {
+        $user = User::withTrashed()->find($id);
+        if ($user) {
+            $user->restore();
+            if ($user->deleted_at !== null) {
+                $user->deleted_at = null;
+                $user->save();
+            }
+            return $user;
+        }
+        return false;
+    }
 }

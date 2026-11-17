@@ -17,8 +17,9 @@ class PublicEprPortalResource extends JsonResource
         return [
             'title'        => $this->title,
             'title_hi'     => $this->title_hi,
-            'link' => $this->link,
-            'is_live' => $this->is_live,
+            'link'         => $this->link,
+            'order'        => $this->order,
+            'is_live'      => $this->is_live,
         ];
     }
 }

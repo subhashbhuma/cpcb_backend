@@ -246,6 +246,7 @@ class EprPortalSeeder extends Seeder
                 [
                     'title_hi' => $portal['title_hi'],
                     'link' => $portal['link'],
+                    'order' => $portal['order'] ?? 0,
                     'is_approved' => $portal['is_approved'],
                     'is_published' => $portal['is_published'],
                     'is_live' => $portal['is_live'],

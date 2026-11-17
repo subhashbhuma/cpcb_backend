@@ -42,7 +42,20 @@ class UserController extends Controller
     public function fetchForDatatable(Request $request)
     {
         if ($request->ajax()) {
-            $users = $this->userService->findAll();
+
+            $currentRole = Auth::user()->roles->first()->name;
+            $users = User::whereHas('roles', function ($query) use ($currentRole) {
+                if ($currentRole == 'SUPERADMIN') {
+                    $query->where('name', '!=', 'SUPERADMIN');
+                } else {
+                    $query->whereNotIn('name', ['ADMIN', 'SUPERADMIN']);
+                }
+                $query->where('name', '!=', 'EMPLOYEE');
+            })->withTrashed()
+                ->with(['roles', 'division']);
+
+
+            // $users = $this->userService->findAll();
             return DataTables::of($users)
                 ->addColumn('division', function ($user) {
                     return $user->division ? $user->division->title : 'N/A';
@@ -72,10 +85,10 @@ class UserController extends Controller
                 ->addColumn('action', function ($user) {
                     $button = '';
 
-                      if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole('SUPERADMIN') ) {
-                            $button .= '<button class="btn btn-sm btn-primary btn-reset-password" data-id="' . $user->id . '" title="Reset Password">
+                    if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole('SUPERADMIN')) {
+                        $button .= '<button class="btn btn-sm btn-primary btn-reset-password" data-id="' . $user->id . '" title="Reset Password">
                                 <i class="fa fa-sync"></i>
-                            </button> ';   
+                            </button> ';
                     }
 
                     if (Auth::user()->hasRole('SUPERADMIN')) {
@@ -89,13 +102,22 @@ class UserController extends Controller
                     }
 
                     if (auth()->user()->can('delete user')) {
-                        $button .= '<button class="btn btn-sm btn-danger delete-user" data-id="' . $user->id . '" title="Delete">
-                            <i class="fa fa-trash"></i>
-                        </button>';
+                        if ($user->deleted_at) {
+                            $button .= '<button class="btn btn-sm btn-success revoke-trash-user" data-id="' . $user->id . '" title="Revoke Trash">
+                                <i class="fa fa-trash-restore"></i>
+                            </button>';
+                        } else {
+                            $button .= '<button class="btn btn-sm btn-danger delete-user" data-id="' . $user->id . '" title="Delete">
+                                <i class="fa fa-trash"></i>
+                            </button>';
+                        }
                     }
                     return $button;
                 })
-                ->rawColumns(['roles', 'action'])
+                ->addColumn('is_trashed', function ($user) {
+                    return $user->deleted_at ? '<span class="text-danger">Inactive</span>' : '<span class="text-success">Active</span>';
+                })
+                ->rawColumns(['roles', 'action', 'is_trashed'])
                 ->make(true);
         }
     }
@@ -394,16 +416,43 @@ class UserController extends Controller
         }
     }
 
+    /**
+     * Restore the specified user from trash.
+     */
+    public function restore(string $id)
+    {
+        try {
+            $user = $this->userService->restore($id);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error while restoring user.',
+                ], 500);
+            }
 
-     public function resetPassword(User $user)
+            return response()->json([
+                'success' => true,
+                'message' => 'User revoked from trash successfully!'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong!',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function resetPassword(User $user)
     {
         try {
             $userDto = new UserDto(
                 $user->name,
                 $user->email,
                 $user->mobile_number,
-                Hash::make(app('config')->get('app.default_password')),  
-                $user->getRoleNames()->toArray(), 
+                Hash::make(app('config')->get('app.default_password')),
+                $user->getRoleNames()->toArray(),
                 $user->permissions,
                 $user->created_by,
                 auth()->id()

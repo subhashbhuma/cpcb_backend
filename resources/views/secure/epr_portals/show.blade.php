@@ -22,6 +22,22 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 card py-2 bg-light mb-3">
+                            <label class="form-label"><strong>Portal Link:</strong></label>
+                            <p class="mb-0">
+                                @if (!empty($eprPortal->link))
+                                    <a href="{{ $eprPortal->link }}" target="_blank" rel="noopener noreferrer">{{ $eprPortal->link }}</a>
+                                @else
+                                    —
+                                @endif
+                            </p>
+                        </div>
+
+                        <div class="col-md-3 card py-2 bg-light mb-3">
+                            <label class="form-label"><strong>Order:</strong></label>
+                            <p class="mb-0">{{ $eprPortal->order ?? 0 }}</p>
+                        </div>
+
+                        <div class="col-md-3 card py-2 bg-light mb-3">
                             <label class="form-label"><strong>Is Live:</strong></label>
                             <p class="mb-0">
                                 {!! $eprPortal->is_live ? '<span class="badge bg-success">Online</span>' : '<span class="badge bg-danger">Offline</span>' !!}

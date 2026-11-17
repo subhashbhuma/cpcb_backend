@@ -27,6 +27,7 @@
                                     <th>Mobile Number</th>
                                     <th>Division</th>
                                     <th>Roles</th>
+                                    <th>Account Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -80,6 +81,11 @@
                     data: 'roles',
                     name: 'roles.name'
                 },
+
+                {
+                    data: 'is_trashed',
+                    name: 'users.deleted_at'
+                },
                 {
                     data: 'action',
                     name: 'action',
@@ -128,7 +134,48 @@
 
             });
 
-             $(document).on('click', '.btn-reset-password', function() {
+            $(document).on('click', '.revoke-trash-user', function () {
+                let userId = $(this).data('id');
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You want to revoke trash for this user.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#28a745",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, Revoke",
+                    cancelButtonText: "Cancel"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "{{ route('users.restore', ':id') }}".replace(':id', userId),
+                            type: "POST",
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                            },
+                            beforeSend: function () {
+                                showLoader();
+                            },
+                            success: function (response) {
+                                hideLoader();
+                                Swal.fire("Success!", response.message, "success").then(() => {
+                                    usersDatatable.ajax.reload();
+                                });
+                            },
+                            error: function (xhr) {
+                                hideLoader();
+                                Swal.fire("Error!", xhr.responseJSON?.message || "Something went wrong!", "error");
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '.btn-reset-password', function () {
                 let id = $(this).data('id');
 
                 if (!id) return;
@@ -150,7 +197,7 @@
                             data: {
                                 _token: "{{ csrf_token() }}"
                             },
-                            success: function(response) {
+                            success: function (response) {
                                 if (response.success) {
                                     Swal.fire({
                                         title: "Success!",
@@ -168,7 +215,7 @@
                                     });
                                 }
                             },
-                            error: function(xhr) {
+                            error: function (xhr) {
                                 if (xhr.status === 422) {
                                     let errors = xhr.responseJSON.errors;
                                     let errorMessages = Object.values(errors).flat().join("<br>");
@@ -191,7 +238,7 @@
                 });
             });
 
-            $(document).on('click', '.btn-unlock-account', function() {
+            $(document).on('click', '.btn-unlock-account', function () {
                 let id = $(this).data('id');
 
                 if (!id) return;
@@ -216,7 +263,7 @@
                             beforeSend: function () {
                                 showLoader();
                             },
-                            success: function(response) {
+                            success: function (response) {
                                 hideLoader();
                                 if (response.success) {
                                     Swal.fire({
@@ -235,7 +282,7 @@
                                     });
                                 }
                             },
-                            error: function(xhr) {
+                            error: function (xhr) {
                                 hideLoader();
                                 Swal.fire({
                                     title: "Error!",

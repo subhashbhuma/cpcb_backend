@@ -110,6 +110,11 @@ class UserService
         return $this->userRepository->delete($id);
     }
 
+    public function restore($id)
+    {
+        return $this->userRepository->restore($id);
+    }
+
     public function resetPassword(UserDto $userDto, $id)
     {
         $user = $this->userRepository->update([

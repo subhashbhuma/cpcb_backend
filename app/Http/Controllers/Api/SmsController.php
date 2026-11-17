@@ -29,7 +29,7 @@ class SmsController extends Controller
         }
 
         $mobile = $request->input('mobile');
-        $otp = 111111;//random_int(100000, 999999);
+        $otp = random_int(100000, 999999);
 
 
         try {
