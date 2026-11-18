@@ -44,8 +44,11 @@ class RecruitmentAnnouncementController extends Controller
     public function fetchForDatatable(Request $request)
     {
         if ($request->ajax()) {
-            $query = RecruitmentAnnouncement::where('type', 'notification')
-                ->orWhere('type', null)
+            $query = RecruitmentAnnouncement::query()
+                ->where(function ($q) {
+                    $q->where('type', 'notification')
+                        ->orWhereNull('type');
+                })
                 ->with('jobPost.job');
 
             if ($request->has('status') && !empty($request->status)) {

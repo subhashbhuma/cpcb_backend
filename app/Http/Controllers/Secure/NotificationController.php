@@ -103,6 +103,8 @@ class NotificationController extends Controller
             'approve_perm' => 'approve circular',
             'publish_perm' => 'publish circular',
             'created_by_col' => 'created_by',
+            'is_approved_bool' => true,
+            'is_published_bool' => true,
         ],
         [
             'table' => 'photo_galleries',
@@ -243,6 +245,7 @@ class NotificationController extends Controller
             'approve_perm' => 'approve faq',
             'publish_perm' => 'publish faq',
             'created_by_col' => 'created_by',
+            'is_published_bool' => true,
         ],
         [
             'table' => 'ngt_court_cases',
@@ -283,6 +286,8 @@ class NotificationController extends Controller
             'approve_perm' => 'approve comment report',
             'publish_perm' => 'publish comment report',
             'created_by_col' => 'created_by',
+            'is_approved_bool' => true,
+            'is_published_bool' => true,
         ],
     ];
 
@@ -339,34 +344,68 @@ class NotificationController extends Controller
             if ($hasSoftDelete)
                 $query->whereNull('deleted_at');
 
+            $isApprovedBool = $module['is_approved_bool'] ?? false;
+            $isPublishedBool = $module['is_published_bool'] ?? false;
+
             // Pending Logic
-            $query->where(function ($q) use ($hasPublished) {
-                $q->where('is_approved', '!=', 1);
-                if ($hasPublished)
-                    $q->orWhere('is_published', 0);
+            $query->where(function ($q) use ($hasPublished, $isApprovedBool, $isPublishedBool) {
+                if ($isApprovedBool) {
+                    $q->where('is_approved', false);
+                } else {
+                    $q->where('is_approved', '!=', 1);
+                }
+
+                if ($hasPublished) {
+                    if ($isPublishedBool) {
+                        $q->orWhere('is_published', false);
+                    } else {
+                        $q->orWhere('is_published', 0);
+                    }
+                }
             });
 
             if (!$isAdmin) {
-                $query->where(function ($q) use ($canApprove, $canPublish, $isOperator, $hasPublished, $user, $module) {
+                $query->where(function ($q) use ($canApprove, $canPublish, $isOperator, $hasPublished, $user, $module, $isApprovedBool, $isPublishedBool) {
                     $conditions = false;
                     if ($canApprove) {
-                        $q->whereIn('is_approved', [0, 2]);
+                        if ($isApprovedBool) {
+                            $q->where('is_approved', false);
+                        } else {
+                            $q->whereIn('is_approved', [0, 2]);
+                        }
                         $conditions = true;
                     }
                     if ($canPublish) {
                         if ($hasPublished) {
-                            $pubCond = function ($sq) {
-                                $sq->where('is_approved', 1)->where('is_published', 0);
+                            $pubCond = function ($sq) use ($isApprovedBool, $isPublishedBool) {
+                                if ($isApprovedBool) {
+                                    $sq->where('is_approved', true);
+                                } else {
+                                    $sq->where('is_approved', 1);
+                                }
+
+                                if ($isPublishedBool) {
+                                    $sq->where('is_published', false);
+                                } else {
+                                    $sq->where('is_published', 0);
+                                }
                             };
                             if (!$conditions)
                                 $q->where($pubCond);
                             else
                                 $q->orWhere($pubCond);
                         } else {
-                            if (!$conditions)
-                                $q->whereIn('is_approved', [0, 2]);
-                            else
-                                $q->orWhereIn('is_approved', [0, 2]);
+                            if ($isApprovedBool) {
+                                if (!$conditions)
+                                    $q->where('is_approved', false);
+                                else
+                                    $q->orWhere('is_approved', false);
+                            } else {
+                                if (!$conditions)
+                                    $q->whereIn('is_approved', [0, 2]);
+                                else
+                                    $q->orWhereIn('is_approved', [0, 2]);
+                            }
                         }
                         $conditions = true;
                     }

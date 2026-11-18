@@ -8,12 +8,12 @@ class EprPortalRepository
 {
     public function findForPublic($limit=null)
     {
-        return EprPortal::where('is_published', 1)->orderBy('order', 'asc')->orderBy('id', 'desc')->limit($limit)->get();
+        return EprPortal::where('is_published', 1)->orderBy('order', 'asc')->orderBy('id', 'asc')->limit($limit)->get();
     }
 
     public function findAll()
     {
-        return EprPortal::orderBy('order', 'asc')->orderBy('id', 'desc')->get();
+        return EprPortal::orderBy('order', 'asc')->orderBy('id', 'asc')->get();
     }
 
     public function findById($id)

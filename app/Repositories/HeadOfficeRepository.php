@@ -34,10 +34,10 @@ class HeadOfficeRepository
         $headOffice = HeadOffice::findOrFail($id);
         return $headOffice->delete();
     }
-    
+
     public function findForPublic($limit = null)
     {
-        $query = HeadOffice::where('is_published', DB::raw('TRUE'))
+        $query = HeadOffice::where('is_published', 1)
             ->where('is_approved', 1)
             ->orderBy('order', 'asc')
             ->latest()

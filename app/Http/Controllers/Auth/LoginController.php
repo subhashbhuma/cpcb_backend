@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Helpers\CustomHelper;
@@ -18,7 +16,6 @@ use App\Services\EmailService;
 use App\Services\RateLimitService;
 use App\Services\SMSService;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
 
 class LoginController extends Controller
 {
@@ -183,25 +180,8 @@ class LoginController extends Controller
         // Record OTP generation attempt for backend
         $this->rateLimitService->recordBackendOtpGenerationAttempt($request, $user);
 
-        // Send OTP via email
-        try {
-            EmailService::sendBackendOtpEmail($user->email, $otpData['otp']);
-        } catch (\Throwable $e) {
-            Log::error('Failed to send backend OTP email to ' . $user->email . ': ' . $e->getMessage());
-        }
-
-        // Send OTP via SMS
-        if (!empty($user->mobile_number)) {
-            try {
-                $smsService = new SMSService();
-                $smsResult = $smsService->sendOtp($user->mobile_number, $otpData['otp']);
-                if (!($smsResult['success'] ?? false)) {
-                    Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . json_encode($smsResult));
-                }
-            } catch (\Throwable $e) {
-                Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . $e->getMessage());
-            }
-        }
+        // Send OTP via email and SMS
+        $this->sendLoginOtp($user, $otpData['otp']);
 
         // Store user ID in session temporarily
         session(['temp_user_id' => $user->id]);
@@ -343,9 +323,23 @@ class LoginController extends Controller
         // Record OTP resend attempt for backend
         $this->rateLimitService->recordBackendOtpResendAttempt($request, $user);
 
+        // Send OTP via email and SMS
+        $this->sendLoginOtp($user, $otpData['otp']);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'New OTP has been sent to your email and mobile number.'
+        ]);
+    }
+
+    /**
+     * Send OTP via Email and SMS with role-based SMS template
+     */
+    private function sendLoginOtp(User $user, string $otp): void
+    {
         // Send OTP via email
         try {
-            EmailService::sendBackendOtpEmail($user->email, $otpData['otp']);
+            EmailService::sendBackendOtpEmail($user->email, $otp);
         } catch (\Throwable $e) {
             Log::error('Failed to send backend OTP email to ' . $user->email . ': ' . $e->getMessage());
         }
@@ -354,7 +348,8 @@ class LoginController extends Controller
         if (!empty($user->mobile_number)) {
             try {
                 $smsService = new SMSService();
-                $smsResult = $smsService->sendOtp($user->mobile_number, $otpData['otp']);
+                $otpTemplate = ($user->hasRole('EMPLOYEE') || $user->hasRole('employee')) ? 'EMPLOYEE_LOGIN' : 'USER_LOGIN';
+                $smsResult = $smsService->sendOtp($user->mobile_number, $otp, $otpTemplate);
                 if (!($smsResult['success'] ?? false)) {
                     Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . json_encode($smsResult));
                 }
@@ -362,11 +357,6 @@ class LoginController extends Controller
                 Log::error('Failed to send backend OTP SMS to ' . $user->mobile_number . ': ' . $e->getMessage());
             }
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'New OTP has been sent to your email and mobile number.'
-        ]);
     }
 
     public function logout(Request $request)

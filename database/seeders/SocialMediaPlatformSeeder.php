@@ -15,14 +15,11 @@ class SocialMediaPlatformSeeder extends Seeder
     public function run(): void
     {
         $platforms = [
-            ['name' => 'Facebook'],
-            ['name' => 'Twitter'],
-            ['name' => 'Instagram'],
-            ['name' => 'LinkedIn'],
-            ['name' => 'YouTube'],
-            ['name' => 'TikTok'],
-            ['name' => 'Snapchat'],
-            ['name' => 'Pinterest'],
+            ['name' => 'Facebook', 'name_hi' => 'फेसबुक'],
+            ['name' => 'Twitter', 'name_hi' => 'ट्विटर'],
+            ['name' => 'Instagram', 'name_hi' => 'इंस्टाग्राम'],
+            ['name' => 'LinkedIn', 'name_hi' => 'लिंक्डइन'],
+            ['name' => 'YouTube', 'name_hi' => 'यूट्यूब'],
         ];
 
         $now = Carbon::now();

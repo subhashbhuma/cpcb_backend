@@ -13,6 +13,7 @@ class SocialMediaPlatform extends Model
 
     protected $fillable = [
         'name',
+        'name_hi',
     ];
 
     public function getActivitylogOptions(): LogOptions

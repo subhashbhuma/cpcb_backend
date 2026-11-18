@@ -51,8 +51,13 @@ class PageController extends Controller
     /**
      * Recursively flatten a menu tree in memory.
      */
-    private function flattenMenuTreeMemory($menu, $groupedMenus, $allMenusById, $prefix, $depth, $locationName, &$rows)
+    private function flattenMenuTreeMemory($menu, $groupedMenus, $allMenusById, $prefix, $depth, $locationName, &$rows, &$visitedRecursion = [])
     {
+        if (isset($visitedRecursion[$menu->id]) || $depth > 20) {
+            return;
+        }
+        $visitedRecursion[$menu->id] = true;
+
         $user = auth()->user();
         $isAdmin = $user->hasRole('ADMIN') || $user->hasRole('SUPERADMIN');
 
@@ -61,12 +66,14 @@ class PageController extends Controller
         if (!$isAdmin && !$this->isMenuAccessible($menu, $groupedMenus))
             return;
 
-        // Build parent path by walking up the parent chain (ancestors only, excluding current)
+        // Build parent path by walking up the parent chain with cycle detection
         $parentParts = [];
-        $current = $allMenusById->get($menu->parent_id);
-        while ($current) {
+        $visitedParents = [$menu->id => true];
+        $current = ($menu->parent_id && $menu->parent_id !== $menu->id) ? $allMenusById->get($menu->parent_id) : null;
+        while ($current && !isset($visitedParents[$current->id])) {
+            $visitedParents[$current->id] = true;
             array_unshift($parentParts, $current->title);
-            $current = $current->parent_id ? $allMenusById->get($current->parent_id) : null;
+            $current = ($current->parent_id && $current->parent_id !== $current->id) ? $allMenusById->get($current->parent_id) : null;
         }
         $parentPath = count($parentParts) > 0 ? implode(' → ', $parentParts) : '';
 
@@ -99,23 +106,30 @@ class PageController extends Controller
             ];
         }
 
-        // Always recurse into children (even if current menu has no pages)
+        // Always recurse into children (guarding against self-reference or cycles)
         $children = $groupedMenus->get($menu->id) ?? collect();
         $childIndex = 1;
         foreach ($children as $child) {
-            $this->flattenMenuTreeMemory($child, $groupedMenus, $allMenusById, $prefix . '.' . $childIndex, $depth + 1, $locationName, $rows);
-            $childIndex++;
+            if ($child->id !== $menu->id) {
+                $this->flattenMenuTreeMemory($child, $groupedMenus, $allMenusById, $prefix . '.' . $childIndex, $depth + 1, $locationName, $rows, $visitedRecursion);
+                $childIndex++;
+            }
         }
     }
 
     /**
      * Check if a menu is accessible (has a page AND permission) or has an accessible descendant.
      */
-    private function isMenuAccessible($menu, $groupedMenus)
+    private function isMenuAccessible($menu, $groupedMenus, &$visited = [])
     {
         if (isset($this->accessibilityCache[$menu->id])) {
             return $this->accessibilityCache[$menu->id];
         }
+
+        if (isset($visited[$menu->id])) {
+            return false;
+        }
+        $visited[$menu->id] = true;
 
         // If this menu has a page, check if the user has ANY permission for this menu
         if ($menu->pages && $menu->pages->count() > 0 && $this->userHasAnyPermission($menu)) {
@@ -125,7 +139,7 @@ class PageController extends Controller
         // Check if any child is accessible
         $children = $groupedMenus->get($menu->id) ?? collect();
         foreach ($children as $child) {
-            if ($this->isMenuAccessible($child, $groupedMenus)) {
+            if ($child->id !== $menu->id && $this->isMenuAccessible($child, $groupedMenus, $visited)) {
                 return $this->accessibilityCache[$menu->id] = true;
             }
         }
@@ -329,7 +343,9 @@ class PageController extends Controller
 
             // Fetch ALL menus for ALL target locations in one query to preserve hierarchies
             $allMenus = \App\Models\Menu::whereIn('location', $locationOrder)
-                ->with('pages')
+                ->with(['pages' => function ($q) {
+                    $q->select(['id', 'menu_id', 'type', 'is_approved', 'is_published']);
+                }])
                 ->orderBy('order')
                 ->get();
 
@@ -344,12 +360,13 @@ class PageController extends Controller
 
                 // Find root menus for this location.
                 $rootMenus = $allMenus->where('location', $locCode)->filter(function ($m) use ($allMenuIds) {
-                    return $m->parent_id === null || !in_array($m->parent_id, $allMenuIds);
+                    return $m->parent_id === null || $m->parent_id === $m->id || !in_array($m->parent_id, $allMenuIds);
                 });
 
                 $slNo = 1;
                 foreach ($rootMenus as $rootMenu) {
-                    $this->flattenMenuTreeMemory($rootMenu, $groupedMenus, $allMenusById, (string) $slNo, 0, $location->location_name, $flatRows);
+                    $visitedRecursion = [];
+                    $this->flattenMenuTreeMemory($rootMenu, $groupedMenus, $allMenusById, (string) $slNo, 0, $location->location_name, $flatRows, $visitedRecursion);
                     $slNo++;
                 }
             }
@@ -418,6 +435,7 @@ class PageController extends Controller
                     return $html;
                 })
                 ->rawColumns(['status', 'page_url', 'actions', 'menu_title'])
+                ->only(['sl_no', 'type', 'menu_title', 'page_url', 'status', 'actions', 'menu_url'])
                 ->make(true);
         }
     }

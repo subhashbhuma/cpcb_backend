@@ -8,7 +8,7 @@ class SocialMediaRepository
 {
     public function findForPublic()
     {
-        return SocialMedia::where('is_published', 1)->get();
+        return SocialMedia::with('socialMediaPlatform')->where('is_published', 1)->get();
     }
 
     public function findAll()

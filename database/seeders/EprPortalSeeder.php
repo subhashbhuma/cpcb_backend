@@ -240,13 +240,13 @@ class EprPortalSeeder extends Seeder
     ],
 ];
 
-        foreach ($portals as $portal) {
+        foreach ($portals as $index => $portal) {
             EprPortal::updateOrCreate(
                 ['title' => $portal['title']],
                 [
                     'title_hi' => $portal['title_hi'],
                     'link' => $portal['link'],
-                    'order' => $portal['order'] ?? 0,
+                    'order' => $portal['order'] ?? ($index + 1),
                     'is_approved' => $portal['is_approved'],
                     'is_published' => $portal['is_published'],
                     'is_live' => $portal['is_live'],

@@ -39,17 +39,17 @@ class Circular extends Model
 
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where('is_published', DB::raw($this->booleanLiteral(true)));
+        return $query->where('is_published', 1);
     }
 
     public function scopeApproved(Builder $query): Builder
     {
-        return $query->where('is_approved', DB::raw($this->booleanLiteral(true)));
+        return $query->where('is_approved', 1);
     }
 
     public function scopePending(Builder $query): Builder
     {
-        return $query->where('is_approved', DB::raw($this->booleanLiteral(false)));
+        return $query->where('is_approved', 0);
     }
 
     private function booleanLiteral(bool $value): string

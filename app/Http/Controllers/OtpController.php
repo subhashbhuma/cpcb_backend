@@ -256,7 +256,7 @@ class OtpController extends Controller
             if (!$isDummyOtp) {
                 // Send SMS using SMSService
                 $smsService = new SMSService();
-                $smsService->sendOtp($mobile, $otp);
+                $smsService->sendOtp($mobile, $otp, 'otp');
             } else {
                 Log::info("Dummy mobile OTP generated for $mobile: $otp");
             }

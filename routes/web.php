@@ -818,6 +818,7 @@ Route::middleware('referer.check')->group(function () {
         Route::get('/epr-portals', [EprPortalController::class, 'index'])->middleware('can:view epr portal')->name('epr-portals.index');
         Route::get('/epr-portals/create', [EprPortalController::class, 'create'])->middleware('can:add epr portal')->name('epr-portals.create');
         Route::post('/epr-portals', [EprPortalController::class, 'store'])->middleware('can:add epr portal')->name('epr-portals.store');
+        Route::post('/epr-portals/sync-orders', [EprPortalController::class, 'syncOrders'])->middleware('can:edit epr portal')->name('epr-portals.sync-orders');
         Route::get('/epr-portals/{eprPortal}', [EprPortalController::class, 'show'])->middleware('can:view epr portal')->name('epr-portals.show');
         Route::get('/epr-portals/{eprPortal}/edit', [EprPortalController::class, 'edit'])->middleware('can:edit epr portal')->name('epr-portals.edit');
         Route::put('/epr-portals/{eprPortal}', [EprPortalController::class, 'update'])->middleware('can:edit epr portal')->name('epr-portals.update');

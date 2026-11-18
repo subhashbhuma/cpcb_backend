@@ -74,7 +74,8 @@ class EprPortalController extends Controller
     public function create()
     {
         $pageTitle = 'Add EPR Portal';
-        return view('secure.epr_portals.create', compact('pageTitle'));
+        $nextOrder = $this->eprPortalService->getNextOrder();
+        return view('secure.epr_portals.create', compact('pageTitle', 'nextOrder'));
     }
 
     /**
@@ -84,7 +85,7 @@ class EprPortalController extends Controller
     {
         try {
             $isLive = $request->has('is_live') && $request->is_live ? 1 : 0;
-            $order = $request->input('order', 0) ?? 0;
+            $order = $request->filled('order') ? (int) $request->input('order') : null;
 
             $portalDto = new EprPortalDto(
                 $request->input('title'),
@@ -157,7 +158,7 @@ class EprPortalController extends Controller
     {
         try {
             $isLive = $request->has('is_live') && $request->is_live ? 1 : 0;
-            $order = $request->input('order', 0) ?? 0;
+            $order = $request->filled('order') ? (int) $request->input('order') : null;
 
             $portalDto = new EprPortalDto(
                 $request->input('title'),
@@ -319,5 +320,25 @@ class EprPortalController extends Controller
             'data' => PublicEprPortalResource::collection($data),
             'lastUpdatedOn' => EprPortal::getLastUpdatedOrCreatedAt(),
         ]);
+    }
+
+    /**
+     * Re-sync all EPR Portal orders sequentially (1, 2, 3...).
+     */
+    public function syncOrders()
+    {
+        try {
+            $this->eprPortalService->resequenceOrders();
+            return response()->json([
+                'success' => true,
+                'message' => 'EPR Portal orders synced successfully!'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('EPR Portal order sync failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong while syncing orders.'
+            ], 500);
+        }
     }
 }

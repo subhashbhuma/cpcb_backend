@@ -37,8 +37,9 @@
                             </div>
 
                             <div class="col-md-6 col-12 mb-3">
-                                <label class="form-label">Order:</label>
-                                <input type="number" name="order" class="form-control" value="{{ old('order', $eprPortal->order ?? 0) }}" min="0" />
+                                <label class="form-label">Order: <span class="text-danger">*</span></label>
+                                <input type="number" name="order" class="form-control" value="{{ old('order', $eprPortal->order ?? 1) }}" min="1" required />
+                                <small class="text-muted">Target order position. Existing records will automatically adjust to accommodate this position.</small>
                             </div>
 
                             <div class="col-md-12 col-12 mb-3">
@@ -81,8 +82,9 @@
                         maxlength: 2048
                     },
                     order: {
+                        required: true,
                         digits: true,
-                        min: 0
+                        min: 1
                     }
                 },
                 submitHandler: function (form) {

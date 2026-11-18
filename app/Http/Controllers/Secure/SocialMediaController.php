@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Secure;
+use App\Http\Resources\SocialMediaResource;
 use Mews\Purifier\Facades\Purifier;
 use App\DTO\SocialMediaDto;
 use App\Http\Controllers\Controller;
@@ -288,7 +289,7 @@ class SocialMediaController extends Controller
         $data = $this->socialMediaService->findForPublic();
         return response()->json([
             'success' => true,
-            'data' => $data
+            'data' => SocialMediaResource::collection($data),//$data
         ], 200);
     }
 }

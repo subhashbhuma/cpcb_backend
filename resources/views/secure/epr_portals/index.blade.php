@@ -4,10 +4,16 @@
     <!-- [ Page Header ] start -->
     @php
         $addRoute = route('epr-portals.create');
+        $button = '';
     @endphp
+    @can('edit epr portal')
+        @php
+            $button .= '<button type="button" id="syncOrdersBtn" class="btn btn-secondary me-2"><i class="fa fa-sync"></i> Sync Orders</button>';
+        @endphp
+    @endcan
     @can('add epr portal')
         @php
-            $button = '<a href="' . $addRoute . '" class="btn btn-primary"><i class="fa fa-plus"></i> Add New</a>';
+            $button .= '<a href="' . $addRoute . '" class="btn btn-primary"><i class="fa fa-plus"></i> Add New</a>';
         @endphp
     @endcan
     <x-page-header title="{{ $pageTitle }}" button="{!! (isset($button)) ? $button : '' !!}" />
@@ -113,6 +119,46 @@
                     width: '12%',
                 }
                 ]
+            });
+
+            /**
+             * Sync orders
+             */
+            $(document).on('click', '#syncOrdersBtn', function () {
+                Swal.fire({
+                    title: "Sync Orders?",
+                    text: "This will re-sequence all active EPR portal orders consecutively (1, 2, 3...).",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Yes, Sync Now",
+                    cancelButtonText: "Cancel"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "{{ route('epr-portals.sync-orders') }}",
+                            type: "POST",
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            beforeSend: function () {
+                                showLoader();
+                            },
+                            success: function (response) {
+                                hideLoader();
+                                if (response.success) {
+                                    Swal.fire("Success!", response.message, "success");
+                                    $('#epr-portals-datatable').DataTable().ajax.reload(null, false);
+                                } else {
+                                    Swal.fire("Error!", response.message, "error");
+                                }
+                            },
+                            error: function (xhr) {
+                                hideLoader();
+                                Swal.fire("Error!", "Something went wrong while syncing orders!", "error");
+                            }
+                        });
+                    }
+                });
             });
 
             /**
