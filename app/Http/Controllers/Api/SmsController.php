@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
-use App\Services\SmsService;
+use App\Services\SMSService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class SmsController extends Controller
 {
-    public function __construct(protected SmsService $smsService)
+    public function __construct(protected SMSService $smsService)
     {
     }
     public function sendOtp(Request $request): JsonResponse
@@ -34,6 +33,8 @@ class SmsController extends Controller
 
         try {
             $result = $this->smsService->sendOtp($mobile, $otp, $request->input('template'));
+            dd($result);
+
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,

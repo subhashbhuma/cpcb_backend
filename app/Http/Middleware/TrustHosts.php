@@ -8,18 +8,40 @@ class TrustHosts extends Middleware
 {
     public function hosts(): array
     {
-        $hosts = [];
+        $hosts = [
+            '^127\.0\.0\.1$',
+            '^localhost$',
+        ];
 
+        // 1. Add host from APP_URL
         if ($appUrl = config('app.url')) {
             $host = parse_url($appUrl, PHP_URL_HOST);
-
             if ($host) {
                 $hosts[] = '^' . preg_quote($host) . '$';
             }
         }
 
-        $hosts[] = '^127\.0\.0\.1$';
-        $hosts[] = '^localhost$';
+        // 2. Add all hosts from ALLOWED_HOSTS (.env)
+        $allowedHosts = config('app.allowed_hosts', []);
+        foreach ($allowedHosts as $entry) {
+            // Normalize: strip scheme (http://, https://) and path/trailing slash
+            $parsed = parse_url($entry, PHP_URL_HOST);
+            if (!$parsed) {
+                // If no scheme was present (e.g. "45.127.74.242" or "example.com:8000")
+                $clean = preg_replace('#^https?://#', '', trim($entry));
+                $clean = explode('/', $clean)[0];
+                $clean = explode(':', $clean)[0];
+            } else {
+                $clean = $parsed;
+            }
+
+            if (!empty($clean)) {
+                $pattern = '^' . preg_quote($clean) . '$';
+                if (!in_array($pattern, $hosts, true)) {
+                    $hosts[] = $pattern;
+                }
+            }
+        }
 
         return $hosts;
     }
@@ -36,23 +58,19 @@ class TrustHosts extends Middleware
         $hostHeader = $request->header('Host');
 
         if ($hostHeader) {
-            $allowedHosts = config('app.allowed_hosts', []);
+            $hostWithoutPort = explode(':', $hostHeader)[0];
+            $allowedPatterns = $this->hosts();
 
-            // 1. Add APP_URL host automatically
-            if ($appUrl = config('app.url')) {
-                $parsed = parse_url($appUrl);
-                $host = $parsed['host'] ?? '';
-                $port = $parsed['port'] ?? '';
-                if ($host) {
-                    $allowedHosts[] = $host;
-                    if ($port) {
-                        $allowedHosts[] = $host . ':' . $port;
-                    }
+            $isAllowed = false;
+            foreach ($allowedPatterns as $pattern) {
+                if (preg_match('/' . $pattern . '/i', $hostWithoutPort)) {
+                    $isAllowed = true;
+                    break;
                 }
             }
 
-            if (!in_array($hostHeader, $allowedHosts)) {
-                abort(400, 'Bad Request');
+            if (!$isAllowed) {
+                abort(400, 'Bad Request: Host not allowed');
             }
         }
 

@@ -27,15 +27,15 @@ class PublicationsTableSeeder extends Seeder
             }
 
             DB::table('publication_categories')->insert([
-                'id'           => $type->report_type_id,
-                'title'        => $title,
-                'title_hi'     => translateToHindi($title), 
-                'code'         => $code,
-                'code_hi'         => translateToHindi($code),
-                'is_approved'  => 1,
+                'id' => $type->report_type_id,
+                'title' => $title,
+                'title_hi' => translateToHindi($title),
+                'code' => $code,
+                'code_hi' => translateToHindi($code),
+                'is_approved' => 1,
                 'is_published' => 1,
-                'created_by'   => 1,
-                'created_at'   => now(),
+                'created_by' => 1,
+                'created_at' => now(),
             ]);
         }
 
@@ -51,18 +51,18 @@ class PublicationsTableSeeder extends Seeder
                     ->value('id');
 
                 DB::table('publications')->insert([
-                    'category_id'  => $catId,
-                    'title'        => $old->title,
-                    'title_hi'     => translateToHindi($old->title),
-                    'price'        => (float) $old->cost,
-                    'file_name'    => $this->clean($old->download_link),
-                    'file_name_hi' => $this->clean($old->download_link),
-                    'is_approved'  => 1,
+                    'category_id' => $catId,
+                    'title' => $old->title,
+                    'title_hi' => translateToHindi($old->title),
+                    'price' => (float) $old->cost,
+                    'file_name' => $this->clean($old->download_link),
+                    'file_name_hi' => null,
+                    'is_approved' => 1,
                     'is_published' => ($old->status == 1) ? 1 : 0,
                     'published_date' => $this->parseTimestamp($old->publication_period),
-                    'created_by'   => 1,
-                    'created_at'   => $this->parseTimestamp($old->added_on),
-                    'updated_at'   => $this->parseTimestamp($old->added_on),
+                    'created_by' => 1,
+                    'created_at' => $this->parseTimestamp($old->added_on),
+                    'updated_at' => $this->parseTimestamp($old->added_on),
                 ]);
 
                 $this->command->getOutput()->progressAdvance();
@@ -73,13 +73,20 @@ class PublicationsTableSeeder extends Seeder
         $this->command->info('Migration completed successfully.');
     }
 
-    private function clean($val) {
+    private function clean($val)
+    {
         $v = trim($val);
         return (empty($v) || in_array($v, ['-', '0', 'null'])) ? null : $v;
     }
 
-    private function parseTimestamp($date) {
-        if (!$date || in_array(trim($date), ['0000-00-00 00:00:00', '0000-00-00', ''])) return null;
-        try { return Carbon::parse($date); } catch (\Exception $e) { return null; }
+    private function parseTimestamp($date)
+    {
+        if (!$date || in_array(trim($date), ['0000-00-00 00:00:00', '0000-00-00', '']))
+            return null;
+        try {
+            return Carbon::parse($date);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

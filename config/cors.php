@@ -18,7 +18,7 @@ return [
 
     'paths' => ['api*'],
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    'allowed_origins' => [env('FRONT_END_URL', 'http://localhost:3002'), 'http://localhost:3000','http://localhost:3001','http://localhost:3002', 'http://127.0.0.1:3000',],
+    'allowed_origins' => [env('FRONT_END_URL', 'http://localhost:3002'), 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://45.127.74.242', 'https://45.127.74.242', 'http://10.212.206.43', 'https://10.212.206.43', 'http://10.212.206.37'],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],

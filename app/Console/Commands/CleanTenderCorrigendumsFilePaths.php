@@ -44,13 +44,12 @@ class CleanTenderCorrigendumsFilePaths extends Command
         foreach ($records as $record) {
             // PHP's basename() function extracts just the filename from a path
             $cleanFile = basename($record->file_name);
-            $cleanFileHi = basename($record->file_name_hi);
 
             DB::table('tender_corrigendums')
                 ->where('id', $record->id)
                 ->update([
                     'file_name' => $cleanFile,
-                    'file_name_hi' => $cleanFileHi
+                    'file_name_hi' => null
                 ]);
 
             $bar->advance();

@@ -376,12 +376,6 @@
 
                         {{-- Portal Logo & Header --}}
                         <div class="text-center mb-3">
-                            <div class="mb-2">
-                                <span class="portal-gov-tag">
-                                    <i class="fa fa-university me-1 text-primary"></i> Govt. of India | MoEF&amp;CC
-                                </span>
-                            </div>
-
                             @if (!empty($siteSettings->admin_panel_logo))
                                 <img src="{{ asset('storage/' . Config::get('file_paths')['SITE_ADMIN_PANEL_LOGO_PATH'] . '/' . $siteSettings->admin_panel_logo) }}"
                                     alt="{{ $siteSettings->site_name ?? 'CPCB Logo' }}" class="auth-brand-logo mb-2">
@@ -516,18 +510,17 @@
                         <h2 class="h5 mb-0 fw-bold text-dark">
                             Two-Factor Authentication
                         </h2>
-                        <small class="text-muted">High Security Verification Step</small>
                     </div>
 
                     <div class="card-body p-4 pt-2">
                         <div class="text-center mb-3">
                             <div
-                                class="alert alert-info py-2 px-3 small border-0 text-start d-flex align-items-center gap-2 mb-2">
-                                <i class="fa fa-envelope-open-text fa-2x text-primary"></i>
+                                class="alert alert-success py-2 px-3 small border-0 text-start d-flex align-items-center gap-2 mb-2">
+                                <i class="fa fa-check-circle fa-2x text-success"></i>
                                 <div>
-                                    <strong>OTP Dispatched</strong><br>
-                                    A 6-digit one-time password has been sent to your registered email and mobile
-                                    number.
+                                    <strong>OTP Sent Successfully</strong><br>
+                                    A 6-digit one-time password has been sent successfully to your registered mobile
+                                    number and email.
                                 </div>
                             </div>
                             <div id="contactInfo" class="small fw-semibold text-secondary mb-2"></div>
@@ -572,8 +565,9 @@
                             </div>
 
                             <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success fw-semibold py-2">
-                                    <i class="fa fa-check-circle me-1"></i> Verify OTP &amp; Continue
+                                <button type="submit" class="btn btn-success fw-semibold py-2" id="verifyOtpBtn">
+                                    <i class="fa fa-check-circle me-1"></i> <span id="verifyOtpBtnText">Verify OTP &amp;
+                                        Continue</span>
                                 </button>
                                 <button type="button" class="btn btn-outline-primary btn-disabled-countdown py-2"
                                     id="resendOtpBtn">
@@ -710,9 +704,12 @@
         });
 
         // =========================
-        // Encryption Key
+        // Encryption Key & Request State Flags
         // =========================
         var encryptionKey = "{{ \App\Helpers\CustomHelper::setEncryptionKey() }}";
+        var isSubmittingLogin = false;
+        var isVerifyingOtp = false;
+        var isResendingOtp = false;
 
         // =========================
         // Form Validation - Login
@@ -750,6 +747,9 @@
             },
             submitHandler: async function (form, event) {
                 event.preventDefault();
+                if (isSubmittingLogin || $('#loginBtn').prop('disabled')) {
+                    return;
+                }
                 performLogin();
             }
         });
@@ -774,6 +774,9 @@
             },
             submitHandler: function (form, event) {
                 event.preventDefault();
+                if (isVerifyingOtp || $('#verifyOtpBtn').prop('disabled')) {
+                    return;
+                }
                 verifyOtp();
             }
         });
@@ -838,7 +841,7 @@
 
             // Resend OTP button
             $('#resendOtpBtn').click(function () {
-                if (!$(this).prop('disabled')) {
+                if (!$(this).prop('disabled') && !isResendingOtp && !isVerifyingOtp) {
                     resendOtp();
                 }
             });
@@ -848,116 +851,149 @@
         // Login AJAX
         // =========================
         async function performLogin() {
-            var formData = new FormData(document.getElementById('loginForm'));
+            if (isSubmittingLogin || $('#loginBtn').prop('disabled')) {
+                return;
+            }
 
-            const password = await encryptPassword(
-                formData.get('password'),
-                encryptionKey
-            );
+            isSubmittingLogin = true;
+            let btn = $('#loginBtn');
+            let label = activeTab === 'nodal' ? 'Sign In as Nodal Officer' : 'Sign In as Employee';
 
-            formData.set('password', password);
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Please wait...');
 
-            $.ajax({
-                url: "{{ route('login.check') }}",
-                type: "POST",
-                data: formData,
-                dataType: "json",
-                cache: false,
-                processData: false,
-                contentType: false,
-                beforeSend: function () {
-                    showLoader();
-                    let btn = $('#loginBtn');
-                    btn.data('original-text', btn.html());
-                    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Authenticating...');
-                },
-                success: function (response) {
-                    hideLoader();
+            try {
+                var formData = new FormData(document.getElementById('loginForm'));
 
-                    if (response.key) {
-                        encryptionKey = response.key;
-                    }
+                const password = await encryptPassword(
+                    formData.get('password'),
+                    encryptionKey
+                );
 
-                    if (response.status === "success") {
-                        Swal.fire({
-                            icon: "success",
-                            title: "Login Successful",
-                            text: response.message,
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => {
-                            window.location.href = response.redirect;
-                        });
+                formData.set('password', password);
 
-                    } else if (response.status === "otp_required") {
-                        showOtpForm();
-                        Swal.fire({
-                            icon: "success",
-                            title: "OTP Dispatched",
-                            text: response.message,
-                            timer: 3000,
-                            showConfirmButton: false
-                        });
+                $.ajax({
+                    url: "{{ route('login.check') }}",
+                    type: "POST",
+                    data: formData,
+                    dataType: "json",
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function () {
+                        showLoader();
+                    },
+                    success: function (response) {
+                        hideLoader();
 
-                    } else if (response.status == 'validation_error') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Validation Error',
-                            text: response.message
-                        });
-
-                    } else if (response.status == 'concurrent_login') {
-                        handleConcurrentLogin(response);
-
-                    } else if (response.status == 'error') {
-                        Swal.fire({
-                            icon: "error",
-                            title: "Authentication Failed",
-                            text: response.message,
-                        });
-
-                    } else {
-                        Swal.fire({
-                            icon: "error",
-                            title: "Login Failed",
-                            text: response.message
-                        });
-                    }
-                },
-                error: function (xhr) {
-                    hideLoader();
-                    mkyReloadCaptcha();
-
-                    let errorMessage = "An error occurred during authentication. Please try again.";
-
-                    if (xhr.responseJSON) {
-                        if (xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
+                        if (response.key) {
+                            encryptionKey = response.key;
                         }
 
-                        if (xhr.responseJSON.key) {
-                            encryptionKey = xhr.responseJSON.key;
+                        if (response.status === "success") {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Login Successful",
+                                text: response.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = response.redirect;
+                            });
+
+                        } else if (response.status === "otp_required") {
+                            showOtpForm();
+                            Swal.fire({
+                                icon: "success",
+                                title: "Success",
+                                text: "OTP has been sent successfully to your registered mobile number and email.",
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+
+                        } else if (response.status == 'validation_error') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Validation Error',
+                                text: response.message
+                            });
+
+                        } else if (response.status == 'concurrent_login') {
+                            handleConcurrentLogin(response);
+
+                        } else if (response.status == 'error') {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Authentication Failed",
+                                text: response.message,
+                            });
+
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Login Failed",
+                                text: response.message
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        hideLoader();
+                        mkyReloadCaptcha();
+
+                        let errorMessage = "An error occurred during authentication. Please try again.";
+
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+
+                            if (xhr.responseJSON.key) {
+                                encryptionKey = xhr.responseJSON.key;
+                            }
+                        }
+
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: errorMessage
+                        });
+                    },
+                    complete: function () {
+                        isSubmittingLogin = false;
+                        if (!$('#otpCard').is(':visible')) {
+                            let label = activeTab === 'nodal' ? 'Sign In as Nodal Officer' : 'Sign In as Employee';
+                            let btn = $('#loginBtn');
+                            btn.prop('disabled', false).html('<i class="fa fa-sign-in-alt me-1"></i> <span id="loginBtnText">' + label + '</span>');
                         }
                     }
-
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: errorMessage
-                    });
-                },
-                complete: function () {
-                    let btn = $('#loginBtn');
-                    btn.prop('disabled', false).html(btn.data('original-text'));
-                }
-            });
+                });
+            } catch (err) {
+                isSubmittingLogin = false;
+                btn.prop('disabled', false).html('<i class="fa fa-sign-in-alt me-1"></i> <span id="loginBtnText">' + label + '</span>');
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Failed to process login request. Please try again."
+                });
+            }
         }
 
         // =========================
         // Verify OTP AJAX
         // =========================
         function verifyOtp() {
+            if (isVerifyingOtp || $('#verifyOtpBtn').prop('disabled')) {
+                return;
+            }
+
+            const otpVal = $('#otpValue').val();
+            if (!otpVal || otpVal.length !== 6) {
+                return;
+            }
+
+            isVerifyingOtp = true;
             const formData = new FormData(document.getElementById('otpForm'));
+            const verifyBtn = $('#verifyOtpBtn');
+
             $.ajax({
                 url: "{{ route('login.verify-otp') }}",
                 type: "POST",
@@ -967,6 +1003,9 @@
                 cache: false,
                 beforeSend: function () {
                     showLoader();
+                    verifyBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verifying OTP...');
+                    $('#resendOtpBtn').prop('disabled', true);
+                    $('#backToLoginBtn').prop('disabled', true);
                 },
                 success: function (response) {
                     hideLoader();
@@ -974,7 +1013,7 @@
                     if (response.status === "success") {
                         Swal.fire({
                             icon: "success",
-                            title: "Verification Successful",
+                            title: "Success",
                             text: response.message,
                             timer: 2000,
                             showConfirmButton: false
@@ -982,6 +1021,12 @@
                             window.location.href = response.redirect;
                         });
                     } else {
+                        isVerifyingOtp = false;
+                        verifyBtn.prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> <span id="verifyOtpBtnText">Verify OTP &amp; Continue</span>');
+                        $('#backToLoginBtn').prop('disabled', false);
+                        if (resendTimeRemaining <= 0) {
+                            $('#resendOtpBtn').prop('disabled', false);
+                        }
                         clearOtpInputs();
                         Swal.fire({
                             icon: "error",
@@ -992,6 +1037,12 @@
                 },
                 error: function (xhr) {
                     hideLoader();
+                    isVerifyingOtp = false;
+                    verifyBtn.prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> <span id="verifyOtpBtnText">Verify OTP &amp; Continue</span>');
+                    $('#backToLoginBtn').prop('disabled', false);
+                    if (resendTimeRemaining <= 0) {
+                        $('#resendOtpBtn').prop('disabled', false);
+                    }
                     clearOtpInputs();
                     let errorMessage = "An error occurred during OTP verification. Please try again.";
                     if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1010,6 +1061,13 @@
         // Resend OTP AJAX
         // =========================
         function resendOtp() {
+            if (isResendingOtp || $('#resendOtpBtn').prop('disabled')) {
+                return;
+            }
+
+            isResendingOtp = true;
+            const resendBtn = $('#resendOtpBtn');
+
             $.ajax({
                 url: "{{ route('login.resend-otp') }}",
                 type: "POST",
@@ -1019,6 +1077,8 @@
                 dataType: "json",
                 beforeSend: function () {
                     showLoader();
+                    resendBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending OTP...');
+                    $('#verifyOtpBtn').prop('disabled', true);
                 },
                 success: function (response) {
                     hideLoader();
@@ -1029,8 +1089,8 @@
                         startResendTimer();
                         Swal.fire({
                             icon: "success",
-                            title: "OTP Resent",
-                            text: response.message,
+                            title: "Success",
+                            text: "OTP has been sent successfully to your registered mobile number and email.",
                             timer: 3000,
                             showConfirmButton: false
                         });
@@ -1040,6 +1100,7 @@
                             title: "Failed to Resend",
                             text: response.message
                         });
+                        resendBtn.prop('disabled', false).html('<i class="fa fa-refresh me-1"></i> <span id="resendBtnText">Resend OTP</span>');
                     }
                 },
                 error: function (xhr) {
@@ -1053,6 +1114,13 @@
                         title: "Error",
                         text: errorMessage
                     });
+                    resendBtn.prop('disabled', false).html('<i class="fa fa-refresh me-1"></i> <span id="resendBtnText">Resend OTP</span>');
+                },
+                complete: function () {
+                    isResendingOtp = false;
+                    if (!isVerifyingOtp) {
+                        $('#verifyOtpBtn').prop('disabled', false);
+                    }
                 }
             });
         }
@@ -1061,11 +1129,13 @@
         // OTP Form Toggle
         // =========================
         function showOtpForm() {
-            let enteredUser = $('#email').val().trim();
-
-
             $('#loginCard').hide();
             $('#otpCard').fadeIn(200);
+            clearOtpInputs();
+            isVerifyingOtp = false;
+            isResendingOtp = false;
+            $('#verifyOtpBtn').prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> <span id="verifyOtpBtnText">Verify OTP &amp; Continue</span>');
+            $('#backToLoginBtn').prop('disabled', false);
             $('.otp-input:first').focus();
             startOtpTimer();
             startResendTimer();
@@ -1078,6 +1148,14 @@
             stopOtpTimer();
             stopResendTimer();
             $("#loginForm")[0].reset();
+            isSubmittingLogin = false;
+            isVerifyingOtp = false;
+            isResendingOtp = false;
+            let label = activeTab === 'nodal' ? 'Sign In as Nodal Officer' : 'Sign In as Employee';
+            $('#loginBtn').prop('disabled', false).html('<i class="fa fa-sign-in-alt me-1"></i> <span id="loginBtnText">' + label + '</span>');
+            $('#verifyOtpBtn').prop('disabled', false).html('<i class="fa fa-check-circle me-1"></i> <span id="verifyOtpBtnText">Verify OTP &amp; Continue</span>');
+            $('#resendOtpBtn').prop('disabled', false).html('<i class="fa fa-refresh me-1"></i> <span id="resendBtnText">Resend OTP</span>');
+            $('#backToLoginBtn').prop('disabled', false);
             mkyReloadCaptcha();
         }
 
@@ -1178,15 +1256,16 @@
                 let timeString = minutes > 0 ?
                     `${minutes}:${seconds.toString().padStart(2, '0')}` :
                     `${seconds}s`;
-                $('#resendBtnText').text(`Resend OTP (${timeString})`);
+                $('#resendOtpBtn').prop('disabled', true).html('<i class="fa fa-refresh me-1"></i> <span id="resendBtnText">Resend OTP (' + timeString + ')</span>');
             } else {
-                $('#resendBtnText').text('Resend OTP');
+                $('#resendOtpBtn').html('<i class="fa fa-refresh me-1"></i> <span id="resendBtnText">Resend OTP</span>');
             }
         }
 
         function enableResendButton() {
-            $('#resendOtpBtn').prop('disabled', false);
-            $('#resendBtnText').text('Resend OTP');
+            if (!isResendingOtp && !isVerifyingOtp) {
+                $('#resendOtpBtn').prop('disabled', false).html('<i class="fa fa-refresh me-1"></i> <span id="resendBtnText">Resend OTP</span>');
+            }
         }
 
         // =========================

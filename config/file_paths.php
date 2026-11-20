@@ -48,10 +48,10 @@ return [
 
     'TENDER_FILE_EN_PATH' => 'tenders/en',
     'TENDER_FILE_HI_PATH' => 'tenders/hi',
-    'TENDER_CORRIGENDUM_FILE_EN_PATH' => 'tenders/en',
-    'TENDER_CORRIGENDUM_FILE_HI_PATH' => 'tenders/hi',
-    // 'TENDER_CORRIGENDUM_FILE_EN_PATH' => 'corrigendums/en',
-    // 'TENDER_CORRIGENDUM_FILE_HI_PATH' => 'corrigendums/hi',
+    // 'TENDER_CORRIGENDUM_FILE_EN_PATH' => 'tenders/en',
+    // 'TENDER_CORRIGENDUM_FILE_HI_PATH' => 'tenders/hi',
+    'TENDER_CORRIGENDUM_FILE_EN_PATH' => 'corrigendums/en',
+    'TENDER_CORRIGENDUM_FILE_HI_PATH' => 'corrigendums/hi',
 
     'CIRCULAR_FILE_EN_PATH' => 'circulars/en',
     'CIRCULAR_FILE_HI_PATH' => 'circulars/hi',
