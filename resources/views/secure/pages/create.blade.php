@@ -382,18 +382,22 @@
                                         icon: "success",
                                         confirmButtonText: "OK"
                                     }).then(() => {
-                                        // window.location.href = response.redirect_url;
-                                        window.location.reload();
+                                        window.location.href = response.redirect_url || "{{ route('pages.index') }}";
                                     });
                                 }
                             } else {
-                                toastr.error(response.message);
+                                toastr.error(response.message || "Failed to create page");
+                                Swal.fire({
+                                    title: "Error!",
+                                    text: response.message || "Failed to create page",
+                                    icon: "error"
+                                });
                             }
                         },
                         error: function (xhr) {
                             if (xhr.status === 422) {
-                                let errors = xhr.responseJSON.errors;
-                                let errorMessages = Object.values(errors).flat().join("<br>");
+                                let errors = xhr.responseJSON ? xhr.responseJSON.errors : null;
+                                let errorMessages = errors ? Object.values(errors).flat().join("<br>") : (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Validation error");
                                 Swal.fire({
                                     title: "Validation Error",
                                     html: errorMessages,

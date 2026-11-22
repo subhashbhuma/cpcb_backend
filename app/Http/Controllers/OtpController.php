@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Otp;
 use App\Mail\SendOtpEmail;
-use App\Mail\SendOtpEmailForDHTIApplication;
 use App\Services\RateLimitService;
 use App\Services\SMSService;
 use App\DTO\EmailLogDto;
@@ -12,7 +11,6 @@ use App\DTO\SmsLogDto;
 use App\Services\EmailLogService;
 use App\Services\SmsLogService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -158,6 +156,7 @@ class OtpController extends Controller
 
             $otp = $otpData['otp'];
             $expiresAt = $otpData['expires_at'];
+
 
             $isDummyOtp = filter_var(config('app.is_dummy_otp', false), FILTER_VALIDATE_BOOLEAN);
             if (!$isDummyOtp) {

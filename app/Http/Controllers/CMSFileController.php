@@ -73,6 +73,8 @@ class CMSFileController extends Controller
             $response->headers->set('Content-Type', $mimeType);
         }  
         $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->remove('X-Frame-Options');
         $response->setContentDisposition(
             ResponseHeaderBag::DISPOSITION_INLINE,
             $fileName
