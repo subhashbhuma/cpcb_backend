@@ -36,7 +36,7 @@ class PublicFeedbackController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'required|string|min:10|max:10|regex:/^[0-9]{10}$/',
             'message' => 'required|string|max:5000|regex:/^[\p{L}\p{N}\p{M}\s\.\,\-_&\(\)\:\;\'’"\/@#\$%?!\+=\[\]\*।॥–—]*$/u',
-            'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            // 'file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -68,16 +68,16 @@ class PublicFeedbackController extends Controller
             $fileName = null;
 
             // Handle file upload safely
-            if ($request->hasFile('file')) {
-                $file = $this->uploadFile($request->file('file'), Config::get('file_paths.FEEDBACK_FILE_PATH', 'feedback/files'));
-                if (!$file['status']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $file['message'],
-                    ], 422);
-                }
-                $fileName = $file['file_name'];
-            }
+            // if ($request->hasFile('file')) {
+            //     $file = $this->uploadFile($request->file('file'), Config::get('file_paths.FEEDBACK_FILE_PATH', 'feedback/files'));
+            //     if (!$file['status']) {
+            //         return response()->json([
+            //             'success' => false,
+            //             'message' => $file['message'],
+            //         ], 422);
+            //     }
+            //     $fileName = $file['file_name'];
+            // }
 
             // Create DTO from validated data
             $dto = new FeedbackDto(

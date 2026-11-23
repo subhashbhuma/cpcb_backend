@@ -181,7 +181,7 @@ class LoginController extends Controller
         $this->rateLimitService->recordBackendOtpGenerationAttempt($request, $user);
 
         // Send OTP via email and SMS
-        $this->sendLoginOtp($user, $otpData['otp']);
+        // $this->sendLoginOtp($user, $otpData['otp']);
 
         // Store user ID in session temporarily
         session(['temp_user_id' => $user->id]);

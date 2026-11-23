@@ -343,9 +343,11 @@ class PageController extends Controller
 
             // Fetch ALL menus for ALL target locations in one query to preserve hierarchies
             $allMenus = \App\Models\Menu::whereIn('location', $locationOrder)
-                ->with(['pages' => function ($q) {
-                    $q->select(['id', 'menu_id', 'type', 'is_approved', 'is_published']);
-                }])
+                ->with([
+                    'pages' => function ($q) {
+                        $q->select(['id', 'menu_id', 'type', 'is_approved', 'is_published']);
+                    }
+                ])
                 ->orderBy('order')
                 ->get();
 
@@ -381,19 +383,19 @@ class PageController extends Controller
                     return "—";
                 })
                 ->addColumn('status', function ($row) {
-                      $page = $row['page'];
+                    $page = $row['page'];
 
-                        if (!$page) {
-                            return '<span class="text-muted">—</span>';
-                        }
+                    if (!$page) {
+                        return '<span class="text-muted">—</span>';
+                    }
 
-                       return $page
+                    return $page
                         ? statusBadge(
                             $page->is_approved,
                             $page->is_published
                         )
                         : '<span class="text-muted">—</span>';
-                                })
+                })
                 ->addColumn('page_url', function ($row) {
                     $menuObj = $row['menu_obj'];
                     return $menuObj->url && $menuObj->url != '#' && $menuObj->url != '0' && $menuObj->url != '' ? '<a href="' . config('app.frontend_url') . $menuObj->url . '" target="_blank">View</a>' : '—';
@@ -402,7 +404,7 @@ class PageController extends Controller
                     $page = $row['page'];
                     if (!$page)
                         // return '<span class="text-muted">—</span>';
-                    return "—";
+                        return "—";
 
                     // Use the menu object already present in the row to avoid N+1 queries
                     $menu = $row['menu_obj'];
@@ -463,36 +465,19 @@ class PageController extends Controller
         $defaultMenu = (int) $request->input('default_menu', 0);
         $fileCountArray = json_decode($request->input('fileCountArray', '[]'), true);
 
-        Log::info('[PageController@store] Page creation request initiated', [
-            'user_id' => $user ? $user->id : null,
-            'user_roles' => $user ? $user->getRoleNames()->toArray() : [],
-            'menu_id' => $menuId,
-            'type' => $type,
-            'title' => $title,
-            'title_hi' => $titleHi,
-            'has_featured_image' => $request->hasFile('featured_image'),
-            'default_menu' => $defaultMenu,
-            'files_count' => is_array($fileCountArray) ? count($fileCountArray) : 0,
-            'ip' => $request->ip(),
-        ]);
 
         if (!$user->hasRole('ADMIN') && !$user->hasRole('SUPERADMIN')) {
             $menu = $menuId ? \App\Models\Menu::find($menuId) : null;
             if (!$menu || !$menu->userCan('add')) {
-                Log::warning('[PageController@store] Permission denied for user on menu', [
-                    'user_id' => $user ? $user->id : null,
-                    'menu_id' => $menuId,
-                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not have permission to add content to this menu.'
-                ], 403);
+                ]);
             }
         }
 
         DB::beginTransaction();
         try {
-            Log::info('[PageController@store] Starting DB transaction');
 
             // Sanitize content with Purifier
             $cleanContent = $request->filled('content') ? Purifier::clean(html_entity_decode($request->input('content'))) : null;
@@ -516,21 +501,10 @@ class PageController extends Controller
                 $user ? $user->id : 1
             );
 
-            Log::info('[PageController@store] Calling PageService::create', [
-                'menu_id' => $pageDto->menu_id,
-                'type' => $pageDto->type,
-                'title' => $pageDto->title,
-                'has_featured_image' => !is_null($pageDto->featured_image),
-                'content_length' => strlen((string) $pageDto->content),
-            ]);
-
             // Use the PageService to create a new page
             $page = $this->pageService->create($pageDto);
 
             if (!$page || empty($page->id)) {
-                Log::error('[PageController@store] PageService::create returned empty or invalid page model', [
-                    'page' => $page
-                ]);
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
@@ -539,32 +513,13 @@ class PageController extends Controller
                 ], 500);
             }
 
-            Log::info('[PageController@store] Page record created successfully in memory/db', [
-                'page_id' => $page->id,
-                'slug' => $page->slug,
-                'menu_id' => $page->menu_id,
-                'type' => $page->type,
-                'exists' => $page->exists,
-                'table' => $page->getTable(),
-                'connection' => $page->getConnectionName() ?: config('database.default'),
-            ]);
 
             // Add the page files
             if (is_array($fileCountArray) && count($fileCountArray) > 0) {
-                Log::info('[PageController@store] Processing attached page files', [
-                    'file_rows' => $fileCountArray
-                ]);
+
                 foreach ($fileCountArray as $key => $count) {
-                    $hasEnFile = $request->hasFile('file_name_' . $count);
-                    $hasHiFile = $request->hasFile('file_name_hi_' . $count);
                     $fileTitle = strip_tags($request->input('title_' . $count) ?? '');
                     $fileTitleHi = strip_tags($request->input('title_hi_' . $count) ?? '');
-
-                    Log::info("[PageController@store] Processing file row #{$count}", [
-                        'has_en_file' => $hasEnFile,
-                        'has_hi_file' => $hasHiFile,
-                        'title' => $fileTitle,
-                    ]);
 
                     $pageFileDto = new PageFileDto(
                         $page->id,
@@ -579,10 +534,6 @@ class PageController extends Controller
                     );
                     $result = $this->pageFileService->create($pageFileDto);
                     if (!$result) {
-                        Log::error("[PageController@store] PageFileService::create failed for row #{$count}", [
-                            'page_id' => $page->id,
-                            'row' => $count
-                        ]);
                         DB::rollBack();
                         return response()->json([
                             'success' => false,
@@ -595,15 +546,6 @@ class PageController extends Controller
 
             DB::commit();
 
-            // Verify persistence in DB post-commit
-            $persisted = DB::table('pages')->where('id', $page->id)->first();
-            Log::info('[PageController@store] DB transaction committed successfully', [
-                'page_id' => $page->id,
-                'persisted_in_db' => !is_null($persisted),
-                'menu_id' => $persisted ? $persisted->menu_id : null,
-                'slug' => $persisted ? $persisted->slug : null,
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => 'Page created successfully!',
@@ -612,15 +554,6 @@ class PageController extends Controller
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-
-            Log::error('[PageController@store] Exception/Error during page creation: ' . $e->getMessage(), [
-                'exception_class' => get_class($e),
-                'error_message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-                'request_inputs' => $request->except(['featured_image'])
-            ]);
 
             $msg = $e->getMessage();
             if (str_contains($msg, 'Security Error') || str_contains($msg, 'Blocked upload')) {
@@ -751,17 +684,6 @@ class PageController extends Controller
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-
-            // Log the exception for debugging purposes
-            Log::error('[PageController@update] Page update failed: ' . $e->getMessage(), [
-                'exception_class' => get_class($e),
-                'error_message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-                'page_id' => $page->id,
-                'request_data' => $request->except(['featured_image'])
-            ]);
 
             $msg = $e->getMessage();
             if (str_contains($msg, 'Security Error') || str_contains($msg, 'Blocked upload')) {
