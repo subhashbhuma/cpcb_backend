@@ -18,24 +18,22 @@
     @if ($siteSettings->favicon)
         <link rel="icon"
             href="{{ asset('storage/' . Config::get('file_paths')['SITE_FAVICON_PATH'] . '/' . $siteSettings->favicon) }}"
-            type="image/x-icon"> <!-- [Google Font] Family -->
+            type="image/x-icon">
     @endif
 
     <link @cspNonce rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap"
         id="main-font-link">
-    <!-- Preload Fonts to prevent 'Slow network is detected' intervention -->
-    <link @cspNonce rel="preload" href="{{ asset('assets/js/plugins/tabler_icon/tabler-icons.woff2') }}" as="font"
+
+    <link @cspNonce rel="preload" href="{{ asset('assets/fonts/tabler/tabler-icons.woff2') }}" as="font"
         type="font/woff2" crossorigin="anonymous">
     <link @cspNonce rel="preload" href="{{ asset('assets/fonts/fontawesome/fa-solid-900.woff2') }}" as="font"
         type="font/woff2" crossorigin="anonymous">
     <!-- data tables css -->
     <link @cspNonce rel="stylesheet" href="{{ asset('assets/css/plugins/dataTables.bootstrap5.min.css') }}">
     <!-- [Tabler Icons] https://tablericons.com -->
-
     <link @cspNonce rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}">
     <script @cspNonce src="{{ asset('assets/js/plugins/tabler_icon/index.umd.min.js') }}"></script>
-    <link @cspNonce rel="stylesheet" href="{{ asset('assets/js/plugins/tabler_icon/tabler-icons.min.css') }}">
     <!-- [Feather Icons] https://feathericons.com -->
     <link @cspNonce rel="stylesheet" href="{{ asset('assets/fonts/feather.css') }}">
     <!-- Toastr css -->
@@ -195,15 +193,16 @@
     <script @cspNonce src="{{ asset('assets/js/plugins/dataTables.bootstrap5.min.js') }}"></script>
 
 
-    <script @cspNonce src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-    <script @cspNonce src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script @cspNonce src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script @cspNonce src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script @cspNonce src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script @cspNonce src="{{ asset('assets/js/plugins/dataTables.buttons.min.js') }}"></script>
+    <script @cspNonce src="{{ asset('assets/js/plugins/jszip.min.js') }}"></script>
+    <script @cspNonce src="{{ asset('assets/js/plugins/pdfmake.min.js') }}"></script>
+    <script @cspNonce src="{{ asset('assets/js/plugins/vfs_fonts.js') }}"></script>
+    <script @cspNonce src="{{ asset('assets/js/plugins/buttons.html5.min.js') }}"></script>
 
 
     <script @cspNonce src="{{ asset('assets/js/plugins/toastr.min.js') }}"></script>
-    <script @cspNonce src="{{ asset('assets/js/plugins/sweetalert2.min.js') }}"></script>
+    <script @cspNonce
+        src="{{ asset('assets/js/plugins/sweetalert2.min.js') }}?v={{ filemtime(public_path('assets/js/plugins/sweetalert2.min.js')) }}"></script>
     <script @cspNonce src="{{ asset('assets/js/plugins/jquery.validate.min.js') }}"></script>
     <script @cspNonce src="{{ asset('assets/js/plugins/nestable/jquery.nestable.min.js') }}"></script>
     <script @cspNonce src="{{ asset('assets/js/fonts/custom-font.js') }}"></script>
@@ -221,7 +220,7 @@
     <script @cspNonce>
         const importMap = {
             imports: {
-                "ckeditor5": "{{ asset('assets/plugins/ckeditor5/ckeditor5/ckeditor5.js') }}",
+                "ckeditor5": "{{ asset('assets/plugins/ckeditor5/ckeditor5/ckeditor5.js') }}?v={{ filemtime(public_path('assets/plugins/ckeditor5/ckeditor5/ckeditor5.js')) }}",
                 "ckeditor5/": "{{ asset('assets/plugins/ckeditor5/ckeditor5/') }}/"
             }
         };

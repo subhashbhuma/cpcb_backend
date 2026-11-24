@@ -41,13 +41,13 @@ class ContentSecurityPolicy implements Preset
         }
 
 
-
         $policy->add(Directive::STYLE_ELEM, [
             Keyword::SELF,
+            Keyword::UNSAFE_INLINE,
             'https://fonts.googleapis.com',
             'https://cdnjs.cloudflare.com',
             'https://cdn.datatables.net',
-        ])->addNonce(Directive::STYLE_ELEM);
+        ]);
 
         // Allow ONLY style attributes (needed by SweetAlert2)
         $policy->add(Directive::STYLE_ATTR, Keyword::UNSAFE_INLINE);

@@ -27,7 +27,6 @@
 </div>
 
 @once
-    <script @cspNonce src="https://cdn.jsdelivr.net/npm/axios@1.16.0/dist/axios.min.js"></script>
-    <!-- <script @cspNonce src="{{ asset('vendor/mky-captcha/js/axios.min.js') }}"></script> -->
+    <script @cspNonce src="{{ asset('vendor/mky-captcha/js/axios.min.js') }}"></script>
     <script @cspNonce src="{{ asset('vendor/mky-captcha/js/mky-captcha.js') }}"></script>
 @endonce
