@@ -59,6 +59,7 @@ use App\Http\Controllers\Secure\InformationCenterController;
 use App\Http\Controllers\Secure\InformationCenterDetailController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\Api\SmsController;
+use App\Http\Controllers\Api\AirQualityController;
 
 // ========================================
 // Public API Routes
@@ -189,6 +190,9 @@ Route::get('/pages/sitemap', [\App\Http\Controllers\Api\SitemapController::class
 Route::get('/today-aqi-bulletin-report', [AqiBulletinController::class, 'getTodayAqiBulletinFile'])->name('today-aqi-bulletin-report');
 Route::get('/today-delhi-ncr-aqi-bulletin-report', [AqiBulletinController::class, 'getTodayDelhiNcrAqiBulletinFile'])->name('today-delhi-ncr-aqi-bulletin-report');
 Route::post('/aqi-bulletin/fetchAqiList', [AqiBulletinController::class, 'fetchAqiList'])->name('aqi-bulletin.fetchAqiList');
+
+// CAAQMS live air quality data
+Route::get('/air-quality/marquee-data', [AirQualityController::class, 'getAirQualityData'])->name('air-quality.marquee-data');
 
 // ========================================
 // Visitor Tracking
