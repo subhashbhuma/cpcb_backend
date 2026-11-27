@@ -461,7 +461,13 @@ class AgraAirQualityController extends Controller
             $report[] = $row;
         }
 
-        $availableMonths = $distinctMonths->map(function ($row) {
+        // If archive, exclude the latest (current) month from the archive timeline/months list
+        $archiveMonths = $distinctMonths;
+        if ($isArchive && $distinctMonths->count() > 1) {
+            $archiveMonths = $distinctMonths->slice(1)->values();
+        }
+
+        $availableMonths = ($isArchive ? $archiveMonths : $distinctMonths)->map(function ($row) {
             $carbonDate = Carbon::createFromDate((int)$row->year, (int)$row->month, 1);
             return [
                 'ym' => $row->ym,

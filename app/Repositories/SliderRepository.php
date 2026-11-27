@@ -3,17 +3,22 @@
 namespace App\Repositories;
 
 use App\Models\Slider;
+use Illuminate\Support\Facades\Cache;
 
 class SliderRepository
 {
+    const CACHE_KEY = 'public_sliders';
+
     public function findForPublic()
     {
-        return Slider::where('is_published', 1)->get();
+        return Cache::rememberForever(self::CACHE_KEY, function () {
+            return Slider::where('is_published', 1)->latest('created_at')->get();
+        });
     }
 
     public function findAll()
     {
-        return Slider::get();
+        return Slider::latest('created_at')->get();
     }
 
     public function findById($id)

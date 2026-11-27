@@ -12,6 +12,17 @@ class Slider extends Model
 {
     use SoftDeletes, LogsActivity;
 
+    protected static function booted()
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('public_sliders');
+        });
+
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('public_sliders');
+        });
+    }
+
     protected $fillable = [
         'title',
         'title_hi',
