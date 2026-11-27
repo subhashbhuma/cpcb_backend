@@ -44,10 +44,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'otp.ratelimit' => \App\Http\Middleware\OtpRateLimitMiddleware::class,
             'geoFence' => \App\Http\Middleware\GeoFencing::class,
             'checkPasswordExpiry' => \App\Http\Middleware\CheckPasswordExpiry::class,
+            'decryptEncryptedFields' => \App\Http\Middleware\DecryptEncryptedFields::class,
         ]);
 
         // CSP headers only matter for HTML responses, not JSON APIs
         $middleware->web(append: [
+            \App\Http\Middleware\DecryptEncryptedFields::class,
             \Spatie\Csp\AddCspHeaders::class,
         ]);
 

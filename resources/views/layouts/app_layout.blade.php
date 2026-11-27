@@ -287,7 +287,10 @@
             });
         }
 
+        window.encryptionKey = "{{ session()->get('encryption_key') ?? \App\Helpers\CustomHelper::setEncryptionKey() }}";
+
         async function encryptPassword(password, hexKey) {
+            hexKey = hexKey || window.encryptionKey;
             if (!hexKey) {
                 console.error("Encryption key is not ready.");
                 return null;
@@ -323,6 +326,81 @@
             }
             return btoa(binary);
         }
+
+        // Global Auto-Encryption for AJAX Requests
+        const globalEncryptedFields = ['description', 'description_hi', 'answer', 'answer_hi', 'content', 'content_hi'];
+
+        async function encryptPayloadData(data) {
+            if (!data || !window.encryptionKey) return;
+
+            if (typeof FormData !== 'undefined' && data instanceof FormData) {
+                for (const field of globalEncryptedFields) {
+                    if (data.has(field)) {
+                        const val = data.get(field);
+                        if (typeof val === 'string' && val.trim() !== '') {
+                            const enc = await encryptPassword(val, window.encryptionKey);
+                            if (enc) data.set(field, enc);
+                        }
+                    }
+                }
+            } else if (typeof data === 'object' && !(data instanceof Blob)) {
+                for (const field of globalEncryptedFields) {
+                    if (Object.prototype.hasOwnProperty.call(data, field)) {
+                        const val = data[field];
+                        if (typeof val === 'string' && val.trim() !== '') {
+                            const enc = await encryptPassword(val, window.encryptionKey);
+                            if (enc) data[field] = enc;
+                        }
+                    }
+                }
+            } else if (typeof data === 'string' && data.length > 0) {
+                try {
+                    const params = new URLSearchParams(data);
+                    let changed = false;
+                    for (const field of globalEncryptedFields) {
+                        if (params.has(field)) {
+                            const val = params.get(field);
+                            if (val && val.trim() !== '') {
+                                const enc = await encryptPassword(val, window.encryptionKey);
+                                if (enc) {
+                                    params.set(field, enc);
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+                    if (changed) {
+                        return params.toString();
+                    }
+                } catch (e) {
+                    // Not url-encoded or parsing failed, ignore
+                }
+            }
+        }
+
+        const originalJQueryAjax = $.ajax;
+        $.ajax = function (url, options) {
+            let ajaxOpts = {};
+            if (typeof url === 'object') {
+                ajaxOpts = url;
+            } else {
+                ajaxOpts = options || {};
+                ajaxOpts.url = url;
+            }
+
+            const method = (ajaxOpts.type || ajaxOpts.method || 'GET').toUpperCase();
+            if (['POST', 'PUT', 'PATCH'].includes(method) && ajaxOpts.data && window.encryptionKey) {
+                return (async () => {
+                    const updatedDataString = await encryptPayloadData(ajaxOpts.data);
+                    if (updatedDataString) {
+                        ajaxOpts.data = updatedDataString;
+                    }
+                    return originalJQueryAjax.call($, ajaxOpts);
+                })();
+            }
+
+            return originalJQueryAjax.call($, ajaxOpts);
+        };
     </script>
 
 
